@@ -1,6 +1,6 @@
 #include <debug/assert.h>
 
-#include "table_entry.h"
+#include "page_table.h"
 #include "paging.h"
 
 #define PAGE_NOT_PRESENT(table, offset) \

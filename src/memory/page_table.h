@@ -1,5 +1,5 @@
-#ifndef _PAGING_TABLE_ENTRY
-#define _PAGING_TABLE_ENTRY
+#ifndef _MEMORY_PAGE_TABLE_H
+#define _MEMORY_PAGE_TABLE_H
 
 /**
  * Bit definitions of memory page map entries.
