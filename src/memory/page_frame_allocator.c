@@ -1,6 +1,4 @@
-/**
- * TODO: Zoned page frame allocator?
- */
+/** TODO: Zoned page frame allocator? */
 
 #include <debug/assert.h>
 #include <general/boolean.h>
