@@ -1,0 +1,3 @@
+#!/bin/bash -eu
+
+sudo apt-get install -y build-essential qemu-system-x86 mtools gnu-efi
