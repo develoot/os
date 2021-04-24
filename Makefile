@@ -27,7 +27,7 @@ $(TARGETS):
 
 PHONY += run
 run: image
-	qemu-system-x86_64 -m 256M -cpu qemu64 -net none \
+	qemu-system-x86_64 -m 2G -cpu qemu64 -net none \
 		-drive if=pflash,format=raw,unit=0,file=/usr/share/qemu/OVMF.fd,readonly=on \
 		-drive format=raw,file=image
 
