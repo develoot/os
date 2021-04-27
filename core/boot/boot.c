@@ -8,10 +8,10 @@
 #include <uefi/uefi.h>
 
 #define UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE (512)
-#define PROGRAM_HEADER_TABLE_BUFFER_SIZE   (512)
+#define MAX_PROGRAM_HEADER_TABLE_SIZE      (512)
 
 EFI_MEMORY_DESCRIPTOR descriptor_buffer[UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE];
-Elf64_Phdr program_header_table[PROGRAM_HEADER_TABLE_BUFFER_SIZE];
+Elf64_Phdr program_header_table[MAX_PROGRAM_HEADER_TABLE_SIZE];
 
 static inline int strcmp(const char *const a, const char *const b, uint64_t size)
 {
@@ -24,9 +24,9 @@ static inline int strcmp(const char *const a, const char *const b, uint64_t size
     return 0;
 }
 
-#ifdef DEBUG_BOOT
-static void print_memory_map(EFI_MEMORY_DESCRIPTOR *descriptor_buffer, UINTN descriptor_buffer_size,
-        UINTN descriptor_size)
+#ifdef DEBUG_BOOT_MEMORY
+static void print_memory_map(const EFI_MEMORY_DESCRIPTOR *const descriptor_buffer,
+        const UINTN descriptor_buffer_size, const UINTN descriptor_size)
 {
     static char *memory_types[] = {
         "EfiReservedMemoryType",
@@ -54,8 +54,10 @@ static void print_memory_map(EFI_MEMORY_DESCRIPTOR *descriptor_buffer, UINTN des
 
     Print(L"Total: %u KB\n", total_page_frame_number);
 }
+#endif
 
-static EFI_STATUS print_graphic_modes(EFI_GRAPHICS_OUTPUT_PROTOCOL *graphics_output)
+#ifdef DEBUG_BOOT_GRAPHIC
+static EFI_STATUS print_graphic_modes(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output)
 {
     EFI_STATUS status;
 
@@ -80,24 +82,21 @@ static EFI_STATUS print_graphic_modes(EFI_GRAPHICS_OUTPUT_PROTOCOL *graphics_out
 }
 #endif
 
-EFI_STATUS open_file(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system, EFI_FILE **out,
-        EFI_FILE *root, CHAR16 *path)
+EFI_STATUS open_file(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
+        EFI_FILE **const out, EFI_FILE *const root, const CHAR16 *const path)
 {
     EFI_STATUS status;
 
-    if (simple_file_system == NULL) {
-        return EFI_ABORTED;
-    }
-
     if (root == NULL) {
-        status = uefi_call_wrapper(simple_file_system->OpenVolume, 2, simple_file_system, &root);
+        status = uefi_call_wrapper(simple_file_system->OpenVolume, 2,
+                simple_file_system, &root);
         if (EFI_ERROR(status)) {
             return status;
         }
     }
 
-    status = uefi_call_wrapper(root->Open, 5, root, out, path, EFI_FILE_MODE_READ,
-            EFI_FILE_READ_ONLY);
+    status = uefi_call_wrapper(root->Open, 5,
+            root, out, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
     if (EFI_ERROR(status)) {
         return status;
     }
@@ -105,19 +104,20 @@ EFI_STATUS open_file(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system, EFI_FI
     return EFI_SUCCESS;
 }
 
-EFI_STATUS get_graphic_frame_buffer_info(EFI_GRAPHICS_OUTPUT_PROTOCOL *graphics_output,
-        struct kernel_boot_info *boot_info)
+EFI_STATUS get_graphic_frame_buffer_info(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output,
+        struct kernel_boot_info *const boot_info)
 {
+    /* Unsupported pixel format. */
     if (graphics_output->Mode->Info->PixelFormat != PixelRedGreenBlueReserved8BitPerColor
             && graphics_output->Mode->Info->PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {
         return EFI_ABORTED;
     }
 
-#ifdef DEBUG_BOOT
+#ifdef DEBUG_BOOT_GRAPHIC
     print_graphic_modes(graphics_output);
 #endif
 
-    struct graphic_frame_buffer_info *buffer_info = &boot_info->frame_buffer_info;
+    struct graphic_frame_buffer_info *const buffer_info = &boot_info->frame_buffer_info;
 
     buffer_info->address            = graphics_output->Mode->FrameBufferBase;
     buffer_info->size               = graphics_output->Mode->FrameBufferSize;
@@ -129,8 +129,9 @@ EFI_STATUS get_graphic_frame_buffer_info(EFI_GRAPHICS_OUTPUT_PROTOCOL *graphics_
     return EFI_SUCCESS;
 }
 
-EFI_STATUS load_psf1_font(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system,
-        struct kernel_boot_info *boot_info, EFI_FILE_PROTOCOL *root, CHAR16 *path)
+EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
+        struct kernel_boot_info *const boot_info, EFI_FILE_PROTOCOL *const root,
+        const CHAR16 *const path)
 {
     EFI_STATUS status;
 
@@ -156,6 +157,7 @@ EFI_STATUS load_psf1_font(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system,
     case PSF1_MODE512:
     case PSF1_MODEHASSEQ:
     default:
+        /* Unsupported font format. */
         return EFI_ABORTED;
     }
 
@@ -172,7 +174,8 @@ EFI_STATUS load_psf1_font(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system,
     return EFI_SUCCESS;
 }
 
-EFI_STATUS load_elf_kernel(struct kernel_boot_info *boot_info, EFI_FILE_PROTOCOL *kernel_file)
+EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
+        const EFI_FILE_PROTOCOL *const kernel_file)
 {
     EFI_STATUS status;
 
@@ -180,22 +183,27 @@ EFI_STATUS load_elf_kernel(struct kernel_boot_info *boot_info, EFI_FILE_PROTOCOL
     uint64_t elf_header_size = sizeof(elf_header);
     uefi_call_wrapper(kernel_file->Read, 3, kernel_file, &elf_header_size, &elf_header);
 
-    if (strcmp((char *)elf_header.e_ident, ELFMAG, SELFMAG) ||
-            elf_header.e_ident[EI_CLASS]   != ELFCLASS64    ||
-            elf_header.e_ident[EI_DATA]    != ELFDATA2LSB   ||
-            elf_header.e_ident[EI_VERSION] != EV_CURRENT    ||
-            elf_header.e_type              != ET_EXEC       ||
-            elf_header.e_machine           != EM_X86_64     ||
-            elf_header.e_version           != EV_CURRENT)
+    if (strcmp((char *)elf_header.e_ident, ELFMAG, SELFMAG)
+            || elf_header.e_ident[EI_CLASS]   != ELFCLASS64
+            || elf_header.e_ident[EI_DATA]    != ELFDATA2LSB
+            || elf_header.e_ident[EI_VERSION] != EV_CURRENT
+            || elf_header.e_machine           != EM_X86_64
+            || elf_header.e_type              != ET_EXEC
+            || elf_header.e_version           != EV_CURRENT)
     {
         return EFI_ABORTED;
     }
 
+    /* Read program header table. */
     uint64_t program_header_table_size = elf_header.e_phentsize * elf_header.e_phnum;
     uefi_call_wrapper(kernel_file->SetPosition, 2, kernel_file, elf_header.e_phoff);
     uefi_call_wrapper(kernel_file->Read, 3, kernel_file, &program_header_table_size,
             program_header_table);
+    if (program_header_table_size != elf_header.e_phentsize * elf_header.e_phnum) {
+        return EFI_ABORTED;
+    }
 
+    /* Get total memory size required to load the kernel. */
     uint64_t total_kernel_memory_size = 0;
     for (uint64_t i = 0; i < elf_header.e_phnum; ++i) {
         if (program_header_table[i].p_type == PT_LOAD) {
@@ -203,8 +211,8 @@ EFI_STATUS load_elf_kernel(struct kernel_boot_info *boot_info, EFI_FILE_PROTOCOL
         }
     }
 
-    uint64_t number_of_pages =
-        total_kernel_memory_size % EFI_PAGE_SIZE > 0
+    /* Allocate pages to load the kernel. */
+    uint64_t number_of_pages = total_kernel_memory_size % EFI_PAGE_SIZE > 0
             ? (total_kernel_memory_size / EFI_PAGE_SIZE) + 1
             : total_kernel_memory_size / EFI_PAGE_SIZE;
 
@@ -214,35 +222,35 @@ EFI_STATUS load_elf_kernel(struct kernel_boot_info *boot_info, EFI_FILE_PROTOCOL
         return status;
     }
 
-    uint64_t kernel_total_code_size = 0;
-    uint64_t segment_size = 0;
+    /* Load the kernel into the memory. */
+    uint64_t previous_segment_end_address = boot_info->kernel_start_address;
+    uint64_t current_segment_file_size = 0;
 
     for (uint64_t i = 0; i < elf_header.e_phnum; ++i) {
         if (program_header_table[i].p_type != PT_LOAD) {
             continue;
         }
 
-        segment_size = program_header_table[i].p_filesz;
+        current_segment_file_size = program_header_table[i].p_filesz;
 
-        uefi_call_wrapper(kernel_file->SetPosition, 2, kernel_file,
-                program_header_table[i].p_offset);
-        uefi_call_wrapper(kernel_file->Read, 3, kernel_file, &segment_size,
-                (void *)(boot_info->kernel_start_address + kernel_total_code_size));
-
-        if (segment_size != program_header_table[i].p_filesz) {
+        uefi_call_wrapper(kernel_file->SetPosition, 2,
+                kernel_file, program_header_table[i].p_offset);
+        uefi_call_wrapper(kernel_file->Read, 3, kernel_file, &current_segment_file_size,
+                (void *)previous_segment_end_address);
+        if (current_segment_file_size != program_header_table[i].p_filesz) {
             return EFI_ABORTED;
         }
 
-        kernel_total_code_size += segment_size;
+        previous_segment_end_address += current_segment_file_size;
     }
 
-    boot_info->kernel_end_address = boot_info->kernel_start_address + total_kernel_memory_size;
+    boot_info->kernel_end_address = previous_segment_end_address;
 
     return 0;
 }
 
-EFI_STATUS get_memory_map_info(struct kernel_boot_info *boot_info,
-        EFI_MEMORY_DESCRIPTOR *descriptor_buffer)
+EFI_STATUS get_memory_map_info(struct kernel_boot_info *const boot_info,
+        EFI_MEMORY_DESCRIPTOR *const descriptor_buffer)
 {
     EFI_STATUS status;
 
@@ -297,7 +305,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 
     Print(L"Load kernel ELF file.\n");
 
-    status = load_elf_kernel(&boot_info, kernel_file);
+    status = load_kernel_elf(&boot_info, kernel_file);
     if (EFI_ERROR(status)) {
         Print(L"Failed to load kernel ELF file. %r\n", status);
         goto ERROR;
@@ -324,7 +332,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 
     Print(L"Load PSF1 font.\n");
 
-    status = load_psf1_font(simple_file_system, &boot_info, NULL, L"zap-light16.psf");
+    status = load_font_psf1(simple_file_system, &boot_info, NULL, L"zap-light16.psf");
     if (EFI_ERROR(status)) {
         Print(L"Failed to load PSF1 font. %r\n", status);
         goto ERROR;
@@ -346,7 +354,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     uefi_call_wrapper(BS->ExitBootServices, 2,
             image_handle, boot_info.memory_map_info.memory_map_key);
 
-#ifdef DEBUG_BOOT
+#ifdef DEBUG_BOOT_MEMORY
     print_memory_map(boot_info.memory_map_info.memory_descriptor_buffer,
             boot_info.memory_map_info.memory_descriptor_buffer_size,
             boot_info.memory_map_info.memory_descriptor_size);
