@@ -418,11 +418,11 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 
     Print(L"Start kernel.\n");
 
-    int (*start_kernel)(struct kernel_boot_info *) =
-        (__attribute__((sysv_abi)) int (*) (struct kernel_boot_info *))
-            (boot_info.kernel_start_address);
+    int (*start_kernel)(struct kernel_boot_info) =
+        (__attribute__((sysv_abi)) int (*)(const struct kernel_boot_info))
+            boot_info.kernel_start_address;
 
-    Print(L"%d\n", start_kernel(&boot_info));
+    Print(L"%d\n", start_kernel(boot_info));
 
     return EFI_SUCCESS;
 
