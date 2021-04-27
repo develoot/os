@@ -203,13 +203,42 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
         return EFI_ABORTED;
     }
 
-    /* Get total memory size required to load the kernel. */
+    /*
+     * Get total memory size required to load the kernel.
+     *
+     * Loadable segment entries in the program header table appear in ascending order,
+     * sorted on the `p_vaddr` member.
+     */
+
     uint64_t total_kernel_memory_size = 0;
+
+    /*
+     * Find the smallest vaddr value.
+     *
+     * As loadable segment entries are sorted in ascending order, the first appears has the
+     * smallest vaddr value.
+     */
+    uint64_t smallest_vaddr = 0;
     for (uint64_t i = 0; i < elf_header.e_phnum; ++i) {
-        if (program_header_table[i].p_type == PT_LOAD) {
-            total_kernel_memory_size += program_header_table[i].p_memsz;
+        if (program_header_table[i].p_type != PT_LOAD) {
+            continue;
         }
+        smallest_vaddr = program_header_table[i].p_vaddr;
+        break;
     }
+
+    /* Find the largest vaddr value and get the segment size of last loadable segment. */
+    uint64_t largest_vaddr = 0;
+    uint64_t last_loadable_segment_size = 0;
+    for (uint64_t i = 0; i < elf_header.e_phnum; ++i) {
+        if (program_header_table[i].p_type != PT_LOAD) {
+            continue;
+        }
+        largest_vaddr = program_header_table[i].p_vaddr;
+        last_loadable_segment_size = program_header_table[i].p_memsz;
+    }
+
+    total_kernel_memory_size = largest_vaddr - smallest_vaddr + last_loadable_segment_size;
 
     /* Allocate pages to load the kernel. */
     uint64_t number_of_pages = total_kernel_memory_size % EFI_PAGE_SIZE > 0
@@ -222,9 +251,35 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
         return status;
     }
 
-    /* Load the kernel into the memory. */
-    uint64_t previous_segment_end_address = boot_info->kernel_start_address;
+    /*
+     * Load the kernel into the memory.
+     *
+     * Because position-independent code uses relative addressing between segments, the
+     * difference between virtual addresses in memory must match the difference between virtual
+     * addresses in the file.
+     *
+     * The difference between the virtual address of any segment in memory and the corresponding
+     * virtual address in the file is thus a single constant value for any one executable or
+     * shared object in a given process. This difference is "base address". One use of the base
+     * address is to reloacte the memory image of the program during dynamic linking.
+     *
+     * An executable or shared object's base address is calculated during execution from three
+     * values: the virtual memory load address, the maximum page size, and the lowest virtual
+     * address of a program's loadable segment.
+     *
+     * To compute the base address, one determines the memory address associated with the lowest
+     * `p_vaddr` value for a `PT_LOAD` segment. This address is truncated to the nearest
+     * multiple of the maximum page size. The corresponding `p_vaddr` value itself is also
+     * truncated to the nearest multiple of the maximum page size.
+     *
+     * The base address is the difference between the truncated memory address and the truncated
+     * `p_vaddr` value.
+     */
+    uint64_t base_address = boot_info->kernel_start_address;
+    uint64_t absolute_offset = base_address > smallest_vaddr ? base_address - smallest_vaddr
+        : smallest_vaddr - base_address;
     uint64_t current_segment_file_size = 0;
+    uint64_t current_load_address = 0;
 
     for (uint64_t i = 0; i < elf_header.e_phnum; ++i) {
         if (program_header_table[i].p_type != PT_LOAD) {
@@ -232,19 +287,20 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
         }
 
         current_segment_file_size = program_header_table[i].p_filesz;
+        current_load_address = base_address > smallest_vaddr
+            ? program_header_table[i].p_vaddr + absolute_offset
+            : program_header_table[i].p_vaddr - absolute_offset;
 
         uefi_call_wrapper(kernel_file->SetPosition, 2,
                 kernel_file, program_header_table[i].p_offset);
         uefi_call_wrapper(kernel_file->Read, 3, kernel_file, &current_segment_file_size,
-                (void *)previous_segment_end_address);
+                (void *)current_load_address);
         if (current_segment_file_size != program_header_table[i].p_filesz) {
             return EFI_ABORTED;
         }
-
-        previous_segment_end_address += current_segment_file_size;
     }
 
-    boot_info->kernel_end_address = previous_segment_end_address;
+    boot_info->kernel_end_address = current_load_address + last_loadable_segment_size;
 
     return 0;
 }
