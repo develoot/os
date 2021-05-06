@@ -99,68 +99,18 @@ static const struct global_descriptor_table global_descriptor_table = {
     }
 };
 
+extern void _load_global_descriptor_table(struct global_descriptor_table_register *register_entry);
+
 void load_global_descriptor_table(void)
 {
     assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
     assert(sizeof(struct global_descriptor_table_register) == 10, "GDTR entry is not packed");
     assert(sizeof(struct segment_descriptor) == 8, "Segment Descriptor is not packed");
 
-    const struct global_descriptor_table_register register_entry = {
+    struct global_descriptor_table_register register_entry = {
         .table_limit = sizeof(struct global_descriptor_table) - 1,
         .table_address = (uint64_t)&global_descriptor_table
     };
 
-    /*
-     * Segment Selector:
-     *
-     * bit [0:1]: Requested Privilege Level
-     *  - Specifies the privilege level of the selector.
-     *    The privilege level can range from 0 to 3, with 0 being the most privileged level.
-     *
-     * bit [2]: Table Indicator Flag
-     *  - Specifies the descriptor to use.
-     *    Clearing this flag selects the GDT, setting the flag selects the current LDT.
-     *
-     * bit [3:15]: Index
-     *  - Selects one of descriptors in the GDT or LDT.
-     */
-    const uint16_t null_segment_selector = 0;
-    const uint16_t kernel_code_segment_selector = (1 << 3) | (0 << 2) | 0x0;
-
-    asm __volatile__ (
-        "lgdt %0 \n\t"
-
-        /*
-         * Because ES, DS, and SS segment registers are not used in 64-bit mode, their fields in
-         * segment descriptor registers are ignored.
-         */
-        "mov %1, %%ds \n\t"
-        "mov %1, %%es \n\t"
-        "mov %1, %%ss \n\t"
-
-        /*
-         * We will not use these segment registers.
-         *
-         * Set them null so that we can detect use of these segment registers using exception.
-         */
-        "mov %1, %%fs \n\t"
-        "mov %1, %%gs \n\t"
-
-        /*
-         * TODO: Set the code segment register.
-         *
-         * For some reason, instruction below dose not work.
-         *
-         * UEFI set some value in the register. Just don't try to change the content for now.
-         *
-         * "pop %%rdi \n\t"
-         * "push %2 \n\t"
-         * "push %%rdi \n\t"
-         * "retfq \n\t" // Far return.
-         */
-
-        :
-        : "m"(register_entry), "r"(null_segment_selector), "r"(kernel_code_segment_selector)
-        : "rdi"
-    );
+    _load_global_descriptor_table(&register_entry);
 }
