@@ -1,10 +1,10 @@
 SYSLIB = /usr/lib
 EFIINC = /usr/include/efi
-CFLAGS = -I$(SRC) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
+CFLAGS = -I$(LIB) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
 		 -Wall -Wextra -fpie -ffreestanding -fshort-wchar -g -DDEBUG_ASSERT
 LDFLAGS = -static -Bsymbolic -nostdlib
 
-SRCS = $(shell find . -name '*.c' -type 'f') $(shell find $(SRC) -name '*.c' -type 'f')
+SRCS = $(shell find . -name '*.c' -type 'f') $(shell find $(LIB) -name '*.c' -type 'f')
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 

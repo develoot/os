@@ -1,11 +1,11 @@
 export ARCH := x86_64
 export CC := gcc
 export LD := ld
-export SRC := $(CURDIR)/src
+export LIB := $(CURDIR)/lib
 
 SCRIPTS := $(CURDIR)/scripts
 ETC := $(CURDIR)/etc
-CORE := $(CURDIR)/core
+SRC := $(CURDIR)/src
 
 TARGETS = boot kernel
 
@@ -16,14 +16,14 @@ image: $(TARGETS)
 	mformat -i image -f 1440 ::
 	mmd -i image ::/EFI
 	mmd -i image ::/EFI/BOOT
-	mcopy -i image $(CORE)/boot/boot.efi ::/EFI/BOOT
+	mcopy -i image $(SRC)/boot/boot.efi ::/EFI/BOOT
 	mcopy -i image $(SCRIPTS)/startup.nsh ::
-	mcopy -i image $(CORE)/kernel/kernel.elf ::
+	mcopy -i image $(SRC)/kernel/kernel.elf ::
 	mcopy -i image $(ETC)/zap-light16.psf ::
 
 PHONY += $(TARGETS)
 $(TARGETS):
-	$(MAKE) -C $(CORE)/$@
+	$(MAKE) -C $(SRC)/$@
 
 PHONY += run
 run: image
@@ -35,7 +35,7 @@ PHONY += clean
 clean:
 	@for TARGET in $(TARGETS); \
 	do \
-		$(MAKE) -C $(CORE)/$${TARGET} clean; \
+		$(MAKE) -C $(SRC)/$${TARGET} clean; \
 	done
 	rm -f image
 
