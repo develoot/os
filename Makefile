@@ -1,11 +1,12 @@
 export ARCH := x86_64
+export AS := nasm
 export CC := gcc
 export LD := ld
-export LIB := $(CURDIR)/lib
 
 SCRIPTS := $(CURDIR)/scripts
 ETC := $(CURDIR)/etc
 SRC := $(CURDIR)/src
+export LIB := $(CURDIR)/lib
 
 TARGETS = boot kernel
 
