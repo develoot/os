@@ -27,12 +27,9 @@ $(ASMOBJS): $(ASMS)
 	$(AS) $(ASMFLAGS) -o $@ -f elf64 $^
 
 %.d: %.c
-	@set -e; \
 	rm -f $@; \
-	$(CC) -M $(CFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@: ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-.PHONY: $(PHONY)
+	$(CC) $(CFLAGS) -MM -MT "$@ $(@:.d=.o)" $< -o $@ \
 
 include $(DEPS)
+
+.PHONY: $(PHONY)
