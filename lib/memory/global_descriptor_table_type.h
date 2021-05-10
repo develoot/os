@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "task_state_segment_type.h"
+
 /** A data structure to be loaded into GDTR register. */
 struct global_descriptor_table_register {
     /**
@@ -145,6 +147,7 @@ struct global_descriptor_table {
     struct segment_descriptor user_null;
     struct segment_descriptor user_code;
     struct segment_descriptor user_data;
+    struct task_state_segment_descriptor task_state;
 } __attribute__((packed, aligned(0x1000)));
 
 #endif
