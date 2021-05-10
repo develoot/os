@@ -43,7 +43,7 @@ static always_inline uint64_t *get_next_page_structure(uint64_t page_table_entry
 
 static uint64_t *request_new_page_structure(void)
 {
-    uint64_t *const new_page_structure = request_page_frame();
+    uint64_t *const new_page_structure = request_page_frame(1);
     if (new_page_structure == PAGE_FRAME_NULL) {
         return PAGE_NULL;
     }

@@ -6,7 +6,12 @@
 
 int init_page_frame_allocator(struct uefi_memory_map_info memory_map_info);
 uint64_t get_total_page_frame_number(void);
-page_frame_t request_page_frame(void);
+/**
+ * Return `size` numbers of continuous page frame.
+ *
+ * @return Start address of requested page frame on success. `PAGE_FRAME_NULL` otherwise.
+ */
+page_frame_t request_page_frame(uint64_t size);
 void free_page_frame(page_frame_t page_frame);
 
 #endif

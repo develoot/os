@@ -122,25 +122,31 @@ uint64_t get_total_page_frame_number(void)
     return global_page_frame_allocator_info.total_page_frame_number;
 }
 
-page_frame_t request_page_frame(void)
+page_frame_t request_page_frame(uint64_t size)
 {
     page_frame_t new_page_frame = PAGE_FRAME_NULL;
     uint8_t *const bitmap = global_page_frame_allocator_info.bitmap;
 
-    if (global_page_frame_allocator_info.free_page_frame_number == 0) {
+    if (global_page_frame_allocator_info.free_page_frame_number < size) {
         return PAGE_FRAME_NULL;
     }
+
+    uint64_t current_page_frame_size = 0;
 
     for (uint64_t bit_index = 0;
             bit_index < global_page_frame_allocator_info.total_page_frame_number;
             ++bit_index) {
         if (get_bit(bitmap, bit_index) == true) {
+            current_page_frame_size = 0;
             continue;
         }
-        set_bit(bitmap, bit_index, true);
-        --global_page_frame_allocator_info.free_page_frame_number;
-        new_page_frame = (page_frame_t)convert_index_to_address(bit_index);
-        break;
+        ++current_page_frame_size;
+        if (current_page_frame_size == size) {
+            set_bits(bitmap, bit_index - size + 1, size, true);
+            global_page_frame_allocator_info.free_page_frame_number -= size;
+            new_page_frame = (page_frame_t)convert_index_to_address(bit_index - size + 1);
+            break;
+        }
     }
 
     return new_page_frame;
