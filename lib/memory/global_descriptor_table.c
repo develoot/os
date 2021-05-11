@@ -1,5 +1,7 @@
 #include <debug/assert.h>
 
+#include <asm/memory/do_load_global_descriptor_table.h>
+
 #include "global_descriptor_table.h"
 #include "global_descriptor_table_type.h"
 
@@ -72,8 +74,6 @@ static const struct global_descriptor_table global_descriptor_table = {
     .user_data = SEGMENT_DESCRIPTOR(0, 0, 0x00F2),
 };
 
-extern void _load_global_descriptor_table(struct global_descriptor_table_register *register_entry);
-
 void load_global_descriptor_table(void)
 {
     assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
@@ -85,5 +85,5 @@ void load_global_descriptor_table(void)
         .table_address = (uint64_t)&global_descriptor_table
     };
 
-    _load_global_descriptor_table(&register_entry);
+    do_load_global_descriptor_table(&register_entry);
 }
