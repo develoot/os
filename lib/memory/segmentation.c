@@ -87,19 +87,9 @@ static struct global_descriptor_table global_descriptor_table = {
 
 static int init_global_task_state_segment(void)
 {
-    page_frame_t ring0_stack = request_page_frames(TASK_STATE_SEGMENT_STACK_SIZE);
-    if (ring0_stack == PAGE_FRAME_NULL) {
-        return 1;
-    }
-    page_frame_t ring2_stack = request_page_frames(TASK_STATE_SEGMENT_STACK_SIZE);
-    if (ring2_stack == PAGE_FRAME_NULL) {
-        free_page_frames(ring0_stack, TASK_STATE_SEGMENT_STACK_SIZE);
-        return 1;
-    }
-
-    global_task_state_segment.rsp0 = (uint64_t)ring0_stack;
-    global_task_state_segment.rsp1 = (uint64_t)PAGE_FRAME_NULL; // We don't use ring1 privilege.
-    global_task_state_segment.rsp2 = (uint64_t)ring2_stack;
+    global_task_state_segment.rsp[0] = 0x00;
+    global_task_state_segment.rsp[1] = 0x00;
+    global_task_state_segment.rsp[2] = 0x00;
 
     global_task_state_segment.interrupt_stack_table[0] = 0x00; // TODO:
     global_task_state_segment.interrupt_stack_table[1] = 0x00; // TODO:

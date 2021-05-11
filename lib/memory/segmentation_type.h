@@ -17,9 +17,8 @@ struct task_state_segment_descriptor {
 
 struct task_state_segment {
     uint32_t reserved1;
-    uint64_t rsp0;
-    uint64_t rsp1;
-    uint64_t rsp2;
+    /** This field is not used in IA-32e IST operations. */
+    uint64_t rsp[3];
     uint64_t reserved2;
     uint64_t interrupt_stack_table[7];
     uint32_t reserved3;
