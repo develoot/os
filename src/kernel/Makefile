@@ -9,8 +9,8 @@ SRCS = $(shell find . -name '*.c' -type 'f') $(shell find $(LIB) -name '*.c' -ty
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
-ASMS = $(shell find $(LIB) -name '*.asm' -type 'f')
-ASMOBJS = $(ASMS:.asm=.o)
+ASMS = $(shell find $(LIB) -name '*.S' -type 'f')
+ASMOBJS = $(ASMS:.S=.o)
 
 LDS = kernel.lds
 

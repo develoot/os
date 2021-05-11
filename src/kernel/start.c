@@ -1,9 +1,9 @@
 #include <kernel/boot_info.h>
 #include <kernel/error.h>
 #include <kernel/shell.h>
-#include <memory/global_descriptor_table.h>
 #include <memory/page_frame_allocator.h>
 #include <memory/paging.h>
+#include <memory/segmentation.h>
 
 int _start(const struct kernel_boot_info boot_info)
 {
@@ -25,7 +25,7 @@ int _start(const struct kernel_boot_info boot_info)
         while (1) {}
     }
     change_current_page_map(&kernel_page_info);
-    load_global_descriptor_table();
+    init_segmentation();
 
     start_shell();
 

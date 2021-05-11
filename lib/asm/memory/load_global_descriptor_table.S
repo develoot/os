@@ -6,7 +6,7 @@
 
 [bits 64]
 
-do_load_global_descriptor_table:
+load_global_descriptor_table:
 	lgdt [rdi]
 
 	mov ax, 0x00 ; Null segment selector.
@@ -21,4 +21,4 @@ do_load_global_descriptor_table:
 	push rax
 	push rdi
 	retfq ; Far return.
-GLOBAL do_load_global_descriptor_table
+GLOBAL load_global_descriptor_table

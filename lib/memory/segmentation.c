@@ -1,10 +1,11 @@
 #include <debug/assert.h>
 
-#include <asm/memory/do_load_global_descriptor_table.h>
+#include <asm/memory/load_global_descriptor_table.h>
 
-#include "global_descriptor_table.h"
-#include "global_descriptor_table_type.h"
 #include "page_frame_allocator.h"
+
+#include "segmentation.h"
+#include "segmentation_type.h"
 
 #define SEGMENT_DESCRIPTOR(_limit, _address, _attribute) \
 {                                                        \
@@ -113,7 +114,7 @@ static int init_global_task_state_segment(void)
     return 0;
 }
 
-void load_global_descriptor_table(void)
+void init_segmentation(void)
 {
     assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
     assert(sizeof(struct global_descriptor_table_register) == 10, "GDTR entry is not packed");
@@ -153,7 +154,7 @@ void load_global_descriptor_table(void)
     global_descriptor_table.task_state.address3  = (task_state_segment_address >> 32) & 0xFFFFFFFF;
     global_descriptor_table.task_state.reserved  = 0;
 
-    do_load_global_descriptor_table(&register_entry);
+    load_global_descriptor_table(&register_entry);
 
     // TODO: Load TSS via `ldt` instruction.
 }
