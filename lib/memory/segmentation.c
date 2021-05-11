@@ -145,6 +145,5 @@ void init_segmentation(void)
     global_descriptor_table.task_state.reserved  = 0;
 
     load_global_descriptor_table(&register_entry);
-
-    // TODO: Load TSS via `ldt` instruction.
+    asm __volatile__("ltr $0x30"); // Load the TSS descriptor's offset from the base of the GDT.
 }
