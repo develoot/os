@@ -87,13 +87,13 @@ static struct global_descriptor_table global_descriptor_table = {
 
 static int init_global_task_state_segment(void)
 {
-    page_frame_t ring0_stack = request_page_frame(512);
+    page_frame_t ring0_stack = request_page_frames(TASK_STATE_SEGMENT_STACK_SIZE);
     if (ring0_stack == PAGE_FRAME_NULL) {
         return 1;
     }
-    page_frame_t ring2_stack = request_page_frame(512);
+    page_frame_t ring2_stack = request_page_frames(TASK_STATE_SEGMENT_STACK_SIZE);
     if (ring2_stack == PAGE_FRAME_NULL) {
-        free_page_frame(ring0_stack); // TODO: Free multiple page frames.
+        free_page_frames(ring0_stack, TASK_STATE_SEGMENT_STACK_SIZE);
         return 1;
     }
 

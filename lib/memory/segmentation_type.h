@@ -13,6 +13,8 @@ struct task_state_segment_descriptor {
     uint32_t reserved;
 } __attribute__((packed));
 
+#define TASK_STATE_SEGMENT_STACK_SIZE (512)
+
 struct task_state_segment {
     uint32_t reserved1;
     uint64_t rsp0;

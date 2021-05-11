@@ -122,7 +122,7 @@ uint64_t get_total_page_frame_number(void)
     return global_page_frame_allocator_info.total_page_frame_number;
 }
 
-page_frame_t request_page_frame(uint64_t size)
+page_frame_t request_page_frames(uint64_t size)
 {
     page_frame_t new_page_frame = PAGE_FRAME_NULL;
     uint8_t *const bitmap = global_page_frame_allocator_info.bitmap;
@@ -152,15 +152,17 @@ page_frame_t request_page_frame(uint64_t size)
     return new_page_frame;
 }
 
-void free_page_frame(page_frame_t page_frame)
+void free_page_frames(page_frame_t page_frame, uint64_t size)
 {
     uint64_t page_frame_address = (uint64_t)page_frame;
     assert(page_frame_address % PAGE_FRAME_SIZE == 0, "Not aligned page frame");
 
     uint8_t *const bitmap = global_page_frame_allocator_info.bitmap;
     uint64_t page_frame_index = convert_address_to_index(page_frame_address);
-    assert(get_bit(bitmap, page_frame_index) == true, "Double-free page frame");
+    for (uint64_t i = 0; i < size; ++i) {
+        assert(get_bit(bitmap, page_frame_index + i) == true, "Double-free page frame");
+    }
 
-    set_bit(bitmap, page_frame_index, false);
-    ++global_page_frame_allocator_info.free_page_frame_number;
+    set_bits(bitmap, page_frame_index, size, false);
+    global_page_frame_allocator_info.free_page_frame_number += size;
 }

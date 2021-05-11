@@ -11,7 +11,7 @@ uint64_t get_total_page_frame_number(void);
  *
  * @return Start address of requested page frame on success. `PAGE_FRAME_NULL` otherwise.
  */
-page_frame_t request_page_frame(uint64_t size);
-void free_page_frame(page_frame_t page_frame);
+page_frame_t request_page_frames(uint64_t size);
+void free_page_frames(page_frame_t page_frame, uint64_t size);
 
 #endif
