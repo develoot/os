@@ -135,7 +135,7 @@ void init_segmentation(void)
 
     const uint64_t task_state_segment_address = (uint64_t)&global_task_state_segment;
 
-    global_descriptor_table.task_state.limit     = 0;
+    global_descriptor_table.task_state.limit     = sizeof(global_task_state_segment);
     global_descriptor_table.task_state.address0  = task_state_segment_address;
     global_descriptor_table.task_state.address1  = (task_state_segment_address >> 16) & 0xFF;
     /*
