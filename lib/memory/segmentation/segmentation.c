@@ -2,8 +2,8 @@
 
 #include <asm/memory/load_global_descriptor_table.h>
 #include <debug/assert.h>
+#include <memory/page_frame_allocator.h>
 
-#include "page_frame_allocator.h"
 #include "segmentation.h"
 #include "segmentation_type.h"
 
