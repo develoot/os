@@ -1,9 +1,9 @@
-#include <debug/assert.h>
+#include <stddef.h>
 
 #include <asm/memory/load_global_descriptor_table.h>
+#include <debug/assert.h>
 
 #include "page_frame_allocator.h"
-
 #include "segmentation.h"
 #include "segmentation_type.h"
 
@@ -144,6 +144,12 @@ void init_segmentation(void)
     global_descriptor_table.task_state.address3  = (task_state_segment_address >> 32) & 0xFFFFFFFF;
     global_descriptor_table.task_state.reserved  = 0;
 
+    const uint16_t task_state_segment_offset = offsetof(struct global_descriptor_table, task_state);
+
     load_global_descriptor_table(&register_entry);
-    asm __volatile__("ltr $0x30"); // Load the TSS descriptor's offset from the base of the GDT.
+    asm __volatile__("ltr %0" // Load the TSS descriptor's offset from the base of the GDT.
+        :
+        : "m"(task_state_segment_offset)
+        :
+    );
 }
