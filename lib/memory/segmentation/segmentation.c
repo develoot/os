@@ -5,16 +5,8 @@
 #include <memory/page_frame_allocator.h>
 
 #include "segmentation.h"
-#include "segmentation_type.h"
-
-#define SEGMENT_DESCRIPTOR(_limit, _address, _attribute) \
-{                                                        \
-    .limit     = (_limit),                               \
-    .address0  = (_address),                             \
-    .address1  = ((_address) >> 16) & 0xFF,              \
-    .attribute = (_attribute),                           \
-    .address2  = ((_address) >> 24) & 0xFF               \
-}
+#include "global_descriptor_table.h"
+#include "task_state_segment.h"
 
 /**
  * A static, constant global variable that represents the TSS.
@@ -25,6 +17,15 @@
 __attribute__((aligned(0x1000)))
 static struct task_state_segment global_task_state_segment;
 
+#define APPLICATION_SEGMENT_DESCRIPTOR(_limit, _address, _attribute) \
+{                                                                    \
+    .limit     = (_limit),                                           \
+    .address0  = (_address),                                         \
+    .address1  = ((_address) >> 16) & 0xFF,                          \
+    .attribute = (_attribute),                                       \
+    .address2  = ((_address) >> 24) & 0xFF                           \
+}
+
 /**
  * A static, constant global variable that represents the GDT.
  *
@@ -33,7 +34,7 @@ static struct task_state_segment global_task_state_segment;
  */
 __attribute__((aligned(0x1000)))
 static struct global_descriptor_table global_descriptor_table = {
-    .null = SEGMENT_DESCRIPTOR(0, 0, 0x00),
+    .null = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00),
     /*
      * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
      * SEGMENT_ATTRIBUTE_DB = 0         // Have to be 0 when L is set.
@@ -45,7 +46,7 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b1000  // Executable, not conforming and not readable.
      */
-    .kernel_code = SEGMENT_DESCRIPTOR(0, 0, 0x2098),
+    .kernel_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x2098),
     /*
      * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
      * SEGMENT_ATTRIBUTE_DB = 0         // This flag is ignored in data segment descriptor.
@@ -57,8 +58,8 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b0010  // Readable and writable.
      */
-    .kernel_data = SEGMENT_DESCRIPTOR(0, 0, 0x0092),
-    .user_null = SEGMENT_DESCRIPTOR(0, 0, 0x00),
+    .kernel_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x0092),
+    .user_null = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00),
     /*
      * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
      * SEGMENT_ATTRIBUTE_DB = 0         // Have to be 0 when L is set.
@@ -70,7 +71,7 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b1000  // Executable, not conforming and not readable.
      */
-    .user_code = SEGMENT_DESCRIPTOR(0, 0, 0x20F8),
+    .user_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x20F8),
     /*
      * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
      * SEGMENT_ATTRIBUTE_DB = 0         // This flag is ignored in data segment descriptor.
@@ -82,7 +83,7 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b0010  // Readable and writable.
      */
-    .user_data = SEGMENT_DESCRIPTOR(0, 0, 0x00F2),
+    .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00F2),
 };
 
 static int init_global_task_state_segment(void)
@@ -107,19 +108,19 @@ static int init_global_task_state_segment(void)
 void init_segmentation(void)
 {
     assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
-    assert(sizeof(struct global_descriptor_table_register) == 10, "GDTR entry is not packed");
-    assert(sizeof(struct segment_descriptor) == 8, "Segment Descriptor is not packed");
+    assert(sizeof(struct global_descriptor_table_register_entry) == 10, "GDTR entry is not packed");
+    assert(sizeof(struct application_segment_descriptor) == 8, "Segment Descriptor is not packed");
     assert(sizeof(struct task_state_segment) % 8 == 0, "TSS is not packed");
 
-    struct global_descriptor_table_register register_entry = {
-        .table_limit = sizeof(struct global_descriptor_table) - 1,
+    struct global_descriptor_table_register_entry register_entry = {
+        .table_limit = sizeof(global_descriptor_table) - 1,
         .table_address = (uint64_t)&global_descriptor_table
     };
 
     init_global_task_state_segment();
 
     /*
-     * We need to load the TSS address into GDT here because address of the
+     * We can't assign the address of the TSS into member of GDT because address of the
      * `global_task_state_segment` is not a compile-time constant.
      */
 

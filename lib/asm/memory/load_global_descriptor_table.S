@@ -1,8 +1,10 @@
 ;--------------------------------------------------------------------------------------------------
-; Load given global descriptor into the GDTR register.
+; Load the given global descriptor register entry into the GDTR register.
 ;
 ; This function also changes contents of segment registers according to the loaded GDT entry.
 ;--------------------------------------------------------------------------------------------------
+
+; TODO: Use segment selector definitions in "global_descriptor_table.h" header.
 
 [bits 64]
 
@@ -21,4 +23,5 @@ load_global_descriptor_table:
 	push rax
 	push rdi
 	retfq ; Far return.
+
 GLOBAL load_global_descriptor_table

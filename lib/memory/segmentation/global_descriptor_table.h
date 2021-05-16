@@ -1,34 +1,18 @@
-#ifndef _MEMORY_SEGMENTATION_TYPE_H
-#define _MEMORY_SEGMENTATION_TYPE_H
+#ifndef _MEMORY_SEGMENTATION_GLOBAL_DESCRIPTOR_TABLE_H
+#define _MEMORY_SEGMENTATION_GLOBAL_DESCRIPTOR_TABLE_H
 
+#include <stddef.h>
 #include <stdint.h>
 
-struct task_state_segment_descriptor {
-    uint16_t limit;
-    uint16_t address0;
-    uint8_t  address1;
-    uint16_t attribute;
-    uint8_t  address2;
-    uint32_t address3;
-    uint32_t reserved;
-} __attribute__((packed));
+#include "task_state_segment.h"
 
-#define TASK_STATE_SEGMENT_STACK_SIZE (512)
-
-struct task_state_segment {
-    uint32_t reserved1;
-    /** This field is not used in IA-32e IST operations. */
-    uint64_t rsp[3];
-    uint64_t reserved2;
-    uint64_t interrupt_stack_table[7];
-    uint32_t reserved3;
-    uint32_t reserved4;
-    uint16_t reserved5;
-    uint16_t io_bitmap_base;
-} __attribute__((packed));
-
-/** A data structure to be loaded into GDTR register. */
-struct global_descriptor_table_register {
+/**
+ * A data structure to be loaded into GDTR register using `lgdt` instruction.
+ *
+ * The GDTR register contains this data structure and always points to global descriptor table of
+ * the system.
+ */
+struct global_descriptor_table_register_entry {
     /**
      * Specifies size of the global descriptor table in byte.
      *
@@ -39,23 +23,23 @@ struct global_descriptor_table_register {
      * than an integral multiple of eight (that is 8N - 1).
      */
     uint16_t table_limit;
-    /** Specifies start address of the global descriptor table. */
+    /** Specifies the base address of the global descriptor table. */
     uint64_t table_address;
 } __attribute__((packed));
 
 /**
- * A general structure for segment descriptors.
+ * A general data structure for application segment descriptors.
  *
- * Base address is calculated combining `address0`, `address1`, and `address2`.
+ * Base address of the segment is calculated combining `address0`, `address1`, and `address2`.
  *
  * Segment limit is calculated combining `limit` and `SEGMENT_ATTRIBUTE_LIMIT` field of the
  * `attribute` member.
  *
  * Most fileds of descriptors are set to 0 as the segmentation is mostly deactivated in IA-32e mode.
  *
- * @see SEGMENT_ATTRIBUTE_LIMIT
+ * Note that system segment descriptors have different structure.
  */
-struct segment_descriptor {
+struct application_segment_descriptor {
     uint16_t limit;
     uint16_t address0;
     uint8_t  address1;
@@ -162,14 +146,37 @@ struct segment_descriptor {
  */
 #define SEGMENT_ATTRIBUTE_G     (0x8000)
 
+/**
+ * The actual global descriptor table data structure.
+ *
+ * The GDTR register should point to base address of this data structure on memory.
+ */
 struct global_descriptor_table {
-    struct segment_descriptor null;
-    struct segment_descriptor kernel_code;
-    struct segment_descriptor kernel_data;
-    struct segment_descriptor user_null;
-    struct segment_descriptor user_code;
-    struct segment_descriptor user_data;
+    struct application_segment_descriptor null;
+    struct application_segment_descriptor kernel_code;
+    struct application_segment_descriptor kernel_data;
+    struct application_segment_descriptor user_null;
+    struct application_segment_descriptor user_code;
+    struct application_segment_descriptor user_data;
     struct task_state_segment_descriptor task_state;
 } __attribute__((packed, aligned(0x1000)));
+
+#define GLOBAL_DESCRIPTOR_TABLE_NULL_SEGMENT_INDEX \
+    (offsetof(struct global_descriptor_table, null) / sizeof(struct application_segment_descriptor))
+
+#define GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX \
+    (offsetof(struct global_descriptor_table, kernel_code) / sizeof(struct application_segment_descriptor))
+
+#define GLOBAL_DESCRIPTOR_TABLE_KERNEL_DATA_SEGMENT_INDEX \
+    (offsetof(struct global_descriptor_table, kernel_data) / sizeof(struct application_segment_descriptor))
+
+#define GLOBAL_DESCRIPTOR_TABLE_USER_NULL_SEGMENT_INDEX \
+    (offsetof(struct global_descriptor_table, user_null) / sizeof(struct application_segment_descriptor))
+
+#define GLOBAL_DESCRIPTOR_TABLE_USER_CODE_SEGMENT_INDEX \
+    (offsetof(struct global_descriptor_table, user_code) / sizeof(struct application_segment_descriptor))
+
+#define GLOBAL_DESCRIPTOR_TABLE_USER_DATA_SEGMENT_INDEX \
+    (offsetof(struct global_descriptor_table, user_data) / sizeof(struct application_segment_descriptor))
 
 #endif
