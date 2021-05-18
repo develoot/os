@@ -2,6 +2,7 @@
 #define _INTERRUPT_DESCRIPTOR_TABLE_H
 
 #include <stdint.h>
+#include <general/address.h>
 
 /**
  * A data structure to be loaded into IDTR register.
@@ -21,7 +22,7 @@ struct interrupt_descriptor_table_register_entry {
      */
     uint16_t table_limit;
     /** Specifies the base address of the interrupt descriptor table. */
-    uint64_t table_address;
+    address_t table_address;
 } __attribute__((packed));
 
 /**
@@ -87,7 +88,7 @@ struct interrupt_gate_descriptor {
 #define INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P    (0x8000)
 
 #define interrupt_gate_descriptor_attribute(IST, Type, DPL) \
-    ((uint16_t)((IST << 1) | (TYPE << 8) | (DPL << 13) | (INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P)))
+    ((uint16_t)((IST << 1) | (Type << 8) | (DPL << 13) | (INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P)))
 
 /**
  * The data structure which holds all interrupt gate descriptors.

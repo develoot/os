@@ -1,3 +1,4 @@
+#include <general/address.h>
 #include <memory/segmentation/global_descriptor_table.h>
 #include <memory/segmentation/segment_selector.h>
 
@@ -7,12 +8,16 @@
 
 #define register_exception_handler(Exception, Handler, Selector, Attribute)                        \
 ({                                                                                                 \
-    global_interrupt_descriptor_table.Exception.offset0 = (uint16_t)((uint64_t)Handler & 0xFFFF);  \
+    global_interrupt_descriptor_table.Exception.offset0 = (uint16_t)((address_t)Handler & 0xFFFF); \
+                                                                                                   \
     global_interrupt_descriptor_table.Exception.offset1                                            \
-            = (uint16_t)(((uint64_t)Handler >> 16) & 0xFFFF);                                      \
+            = (uint16_t)(((address_t)Handler >> 16) & 0xFFFF);                                     \
+                                                                                                   \
     global_interrupt_descriptor_table.Exception.offset2                                            \
-            = (uint32_t)(((uint64_t)Handler >> 32) & 0xFFFFFFF);                                   \
+            = (uint32_t)(((address_t)Handler >> 32) & 0xFFFFFFF);                                  \
+                                                                                                   \
     global_interrupt_descriptor_table.Exception.segment_selector = Selector;                       \
+                                                                                                   \
     global_interrupt_descriptor_table.Exception.attribute = Attribute;                             \
 })
 
@@ -102,7 +107,7 @@ int initialize_interrupts(void)
 
     struct interrupt_descriptor_table_register_entry register_entry = {
         .table_limit = sizeof(global_interrupt_descriptor_table) - 1,
-        .table_address = (uint64_t)&global_interrupt_descriptor_table
+        .table_address = (address_t)&global_interrupt_descriptor_table
     };
 
     asm __volatile__("lidt %0" : : "m"(register_entry));
