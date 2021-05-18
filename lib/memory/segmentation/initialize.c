@@ -6,7 +6,7 @@
 
 #include "global_descriptor_table.h"
 #include "task_state_segment.h"
-#include "init.h"
+#include "initialize.h"
 
 /**
  * A static, constant global variable that represents the TSS.
@@ -86,7 +86,7 @@ static struct global_descriptor_table global_descriptor_table = {
     .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00F2),
 };
 
-static int init_global_task_state_segment(void)
+static int initialize_global_task_state_segment(void)
 {
     global_task_state_segment.rsp[0] = 0x00;
     global_task_state_segment.rsp[1] = 0x00;
@@ -106,7 +106,7 @@ static int init_global_task_state_segment(void)
     return 0;
 }
 
-void init_segmentation(void)
+void initialize_segmentation(void)
 {
     assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
     assert(sizeof(struct global_descriptor_table_register_entry) == 10, "GDTR entry is not packed");
@@ -118,7 +118,7 @@ void init_segmentation(void)
         .table_address = (uint64_t)&global_descriptor_table
     };
 
-    init_global_task_state_segment();
+    initialize_global_task_state_segment();
 
     /*
      * We can't assign the address of the TSS into member of GDT because address of the

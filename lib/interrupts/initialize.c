@@ -3,7 +3,7 @@
 
 #include "exception_handlers.h"
 #include "interrupt_descriptor_table.h"
-#include "init.h"
+#include "initialize.h"
 
 #define register_exception_handler(Exception, Handler, Selector, Attribute)                        \
 ({                                                                                                 \
@@ -18,7 +18,7 @@
 
 static struct interrupt_descriptor_table global_interrupt_descriptor_table;
 
-int init_interrupts(void)
+int initialize_interrupts(void)
 {
     register_exception_handler(divide_error, dummy_handler,
             segment_selector(GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX, 0, 0),
