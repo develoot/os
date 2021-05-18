@@ -100,5 +100,12 @@ int init_interrupts(void)
             segment_selector(GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX, 0, 0),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
+    struct interrupt_descriptor_table_register_entry register_entry = {
+        .table_limit = sizeof(global_interrupt_descriptor_table) - 1,
+        .table_address = (uint64_t)&global_interrupt_descriptor_table
+    };
+
+    asm __volatile__("lidt %0" : : "m"(register_entry));
+
     return 0;
 }
