@@ -9,12 +9,12 @@
  * An entry point of procedure is calculated combining `offset#` members.
  */
 struct interrupt_gate_descriptor {
-    uint16_t offset1;
+    uint16_t offset0;
     /** Segment selector for destination code segment. */
     uint16_t segment_selector;
     uint16_t attribute;
-    uint16_t offset2;
-    uint32_t offset3;
+    uint16_t offset1;
+    uint32_t offset2;
     uint64_t reserved;
 } __attribute__((packed));
 
