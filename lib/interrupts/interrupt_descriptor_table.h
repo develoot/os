@@ -4,6 +4,27 @@
 #include <stdint.h>
 
 /**
+ * A data structure to be loaded into IDTR register.
+ *
+ * The IDTR register contains this data structure and always points to the interrupt descriptor
+ * table of the system.
+ */
+struct interrupt_descriptor_table_register_entry {
+    /**
+     * Specifies size of the interrupt descriptor table in byte.
+     *
+     * As with segments, the limit value is added to the base address to get the address of the last
+     * valid byte. A limit value of 0 results in exactly one valid byte.
+     *
+     * Because segment descriptors are always 8 bytes long, the IDT limit should always be one less
+     * than an integral multiple of eight (that is 8N - 1).
+     */
+    uint16_t table_limit;
+    /** Specifies the base address of the interrupt descriptor table. */
+    uint64_t table_address;
+} __attribute__((packed));
+
+/**
  * A data structure that represents interrupt or trap gate descriptor.
  *
  * An entry point of procedure is calculated combining `offset#` members.
