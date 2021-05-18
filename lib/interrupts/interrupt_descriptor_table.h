@@ -65,8 +65,8 @@ struct interrupt_gate_descriptor {
  */
 #define INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P    (0x8000)
 
-#define interrupt_gate_descriptor_attribute(Ist, Type, Dpl) \
-    (uint16_t)((Ist << 1) | (Type << 8) | (Dpl << 13))
+#define interrupt_gate_descriptor_attribute(IST, TYPE, DPL) \
+    ((uint16_t)((IST << 1) | (TYPE << 8) | (DPL << 13) | (INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P)))
 
 /**
  * The data structure which holds all interrupt gate descriptors.
