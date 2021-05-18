@@ -3,7 +3,7 @@
 #include <kernel/shell.h>
 #include <memory/page_frame_allocator.h>
 #include <memory/paging.h>
-#include <memory/segmentation/segmentation.h>
+#include <memory/segmentation/init.h>
 
 int _start(const struct kernel_boot_info boot_info)
 {

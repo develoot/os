@@ -4,9 +4,9 @@
 #include <debug/assert.h>
 #include <memory/page_frame_allocator.h>
 
-#include "segmentation.h"
 #include "global_descriptor_table.h"
 #include "task_state_segment.h"
+#include "init.h"
 
 /**
  * A static, constant global variable that represents the TSS.
