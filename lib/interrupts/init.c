@@ -1,40 +1,41 @@
 #include "interrupt_descriptor_table.h"
+#include "exception_handlers.h"
 #include "init.h"
 
-#define INTERRUPT_GATE_DESCRIPTOR(_offset, _selector, _attribute)                           \
-{                                                                                           \
-    .offset0          = (uint16_t)(_offset),                                                \
-    .segment_selector = (uint16_t)(_selector),                                              \
-    .attribute        = (uint16_t)(_attribute),                                             \
-    .offset1          = (uint16_t)((_offset) >> 16) & 0xFFFF,                               \
-    .offset2          = (uint32_t)((_offset) >> 32) & 0xFFFFFFFF,                           \
-    .reserved         = 0                                                                   \
-}
+#define register_exception_handler(Exception, Handler, Selector, Attribute) ({                     \
+    global_interrupt_descriptor_table.Exception.offset0 = (uint16_t)((uint64_t)Handler & 0xFFFF);  \
+    global_interrupt_descriptor_table.Exception.offset1                                            \
+            = (uint16_t)(((uint64_t)Handler >> 16) & 0xFFFF);                                      \
+    global_interrupt_descriptor_table.Exception.offset2                                            \
+            = (uint32_t)(((uint64_t)Handler >> 32) & 0xFFFFFFF);                                   \
+    global_interrupt_descriptor_table.Exception.segment_selector = Selector;                       \
+    global_interrupt_descriptor_table.Exception.attribute = Attribute;                             \
+})
 
-static const struct interrupt_descriptor_table global_interrupt_descriptor_table = {
-    .divide_error = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0, 0, 0),
-    .debug = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .non_maskable_interrupt = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .break_point = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .overflow = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .bound_range_exceeded = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .invalid_opcode = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .device_not_available = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .double_fault = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .coprocessor_segment_overrun = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .invalid_task_state_segment = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .segment_not_present = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .stack_full = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .general_protection = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .page_fault = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .x87_fpu_floating_point_error = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .alignment_check = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .machine_check = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .simd_floating_point = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-    .virtualization = INTERRUPT_GATE_DESCRIPTOR((uint64_t)0,0,0),
-};
+static struct interrupt_descriptor_table global_interrupt_descriptor_table;
 
 int init_interrupts(void)
 {
+    register_exception_handler(divide_error, dummy_handler, 0, 0);
+    register_exception_handler(debug, dummy_handler, 0, 0);
+    register_exception_handler(non_maskable_interrupt, dummy_handler, 0, 0);
+    register_exception_handler(break_point, dummy_handler, 0, 0);
+    register_exception_handler(overflow, dummy_handler, 0, 0);
+    register_exception_handler(bound_range_exceeded, dummy_handler, 0, 0);
+    register_exception_handler(invalid_opcode, dummy_handler, 0, 0);
+    register_exception_handler(device_not_available, dummy_handler, 0, 0);
+    register_exception_handler(double_fault, dummy_handler, 0, 0);
+    register_exception_handler(coprocessor_segment_overrun, dummy_handler, 0, 0);
+    register_exception_handler(invalid_task_state_segment, dummy_handler, 0, 0);
+    register_exception_handler(segment_not_present, dummy_handler, 0, 0);
+    register_exception_handler(stack_full, dummy_handler, 0, 0);
+    register_exception_handler(general_protection, dummy_handler, 0, 0);
+    register_exception_handler(page_fault, dummy_handler, 0, 0);
+    register_exception_handler(x87_fpu_floating_point_error, dummy_handler, 0, 0);
+    register_exception_handler(alignment_check, dummy_handler, 0, 0);
+    register_exception_handler(machine_check, dummy_handler, 0, 0);
+    register_exception_handler(simd_floating_point, dummy_handler, 0, 0);
+    register_exception_handler(virtualization, dummy_handler, 0, 0);
+
     return 0;
 }
