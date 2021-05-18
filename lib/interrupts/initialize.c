@@ -6,19 +6,13 @@
 #include "interrupt_descriptor_table.h"
 #include "initialize.h"
 
-#define register_exception_handler(Exception, Handler, Selector, Attribute)                        \
-({                                                                                                 \
-    global_interrupt_descriptor_table.Exception.offset0 = (uint16_t)((address_t)Handler & 0xFFFF); \
-                                                                                                   \
-    global_interrupt_descriptor_table.Exception.offset1                                            \
-            = (uint16_t)(((address_t)Handler >> 16) & 0xFFFF);                                     \
-                                                                                                   \
-    global_interrupt_descriptor_table.Exception.offset2                                            \
-            = (uint32_t)(((address_t)Handler >> 32) & 0xFFFFFFF);                                  \
-                                                                                                   \
-    global_interrupt_descriptor_table.Exception.segment_selector = Selector;                       \
-                                                                                                   \
-    global_interrupt_descriptor_table.Exception.attribute = Attribute;                             \
+#define register_exception_handler(Exception, Handler, Selector, Attribute)                         \
+({                                                                                                  \
+    global_interrupt_descriptor_table.Exception.offset0 = (address_t)(Handler) & 0xFFFF;            \
+    global_interrupt_descriptor_table.Exception.offset1 = ((address_t)(Handler) >> 16) & 0xFFFF;    \
+    global_interrupt_descriptor_table.Exception.offset2 = ((address_t)(Handler) >> 32) & 0xFFFFFFF; \
+    global_interrupt_descriptor_table.Exception.segment_selector = (Selector);                      \
+    global_interrupt_descriptor_table.Exception.attribute = (Attribute);                            \
 })
 
 static struct interrupt_descriptor_table global_interrupt_descriptor_table;
