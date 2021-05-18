@@ -100,6 +100,7 @@ static int init_global_task_state_segment(void)
     global_task_state_segment.interrupt_stack_table[5] = 0x00; // TODO:
     global_task_state_segment.interrupt_stack_table[6] = 0x00; // TODO:
 
+    // This effectively disables the bitmap field of the TSS.
     global_task_state_segment.io_bitmap_base = sizeof(global_task_state_segment) + 1;
 
     return 0;
