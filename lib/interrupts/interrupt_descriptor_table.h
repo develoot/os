@@ -43,9 +43,9 @@ struct interrupt_gate_descriptor {
  * I can't find any doucments describing behavior of this bit in IA-32e mode.
  * So I just assume that in IA-32e mode, it's for 64-bit when it's set.
  */
-#define INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_TYPE           (0x0F00)
-#define INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_TYPE_INTERRUPT (0x0E00)
-#define INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_TYPE_TRAP      (0x0F00)
+#define INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_TYPE (0x0F00)
+#define INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT (0x0E00)
+#define INTERRUPT_GATE_DESCRIPTOR_TYPE_TRAP      (0x0F00)
 /**
  * Descriptor privilege level.
  *
