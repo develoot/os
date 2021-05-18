@@ -5,14 +5,14 @@
 extern void __assert(const char *expression, const char *file_name, const char *function_name,
         const char *message);
 
-#define assert(expression, message) ({                              \
-    if(expression)                                                  \
-        ;                                                           \
-    else                                                            \
-        __assert(#expression, __FILE__,  __func__, message);        \
+#define assert(Expression, Message) ({                                                      \
+    if(Expression)                                                                          \
+        ;                                                                                   \
+    else                                                                                    \
+        __assert(#Expression, __FILE__,  __func__, Message);                                \
 })
 #else
-#define assert(expression, message) ({ expression; })
+#define assert(Expression, Message) ({ Expression; })
 #endif
 
 #endif

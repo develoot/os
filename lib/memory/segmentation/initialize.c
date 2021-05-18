@@ -17,13 +17,13 @@
 __attribute__((aligned(0x1000)))
 static struct task_state_segment global_task_state_segment;
 
-#define APPLICATION_SEGMENT_DESCRIPTOR(_limit, _address, _attribute) \
-{                                                                    \
-    .limit     = (_limit),                                           \
-    .address0  = (_address),                                         \
-    .address1  = ((_address) >> 16) & 0xFF,                          \
-    .attribute = (_attribute),                                       \
-    .address2  = ((_address) >> 24) & 0xFF                           \
+#define APPLICATION_SEGMENT_DESCRIPTOR(Limit, Address, Attribute)   \
+{                                                                   \
+    .limit     = (Limit),                                           \
+    .address0  = (Address),                                         \
+    .address1  = ((Address) >> 16) & 0xFF,                          \
+    .attribute = (Attribute),                                       \
+    .address2  = ((Address) >> 24) & 0xFF                           \
 }
 
 /**

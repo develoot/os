@@ -6,7 +6,7 @@
 
 #include "paging.h"
 
-#define PAGE_NOT_PRESENT(table, offset) (!(table[offset] & GENERAL_PAGE_STRUCTURE_ENTRY_PRESENT))
+#define PAGE_NOT_PRESENT(Table, Offset) (!(Table[Offset] & GENERAL_PAGE_STRUCTURE_ENTRY_PRESENT))
 
 static always_inline uint16_t get_level4_table_offset(uint64_t virtual_address)
 {
