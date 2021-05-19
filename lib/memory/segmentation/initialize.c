@@ -8,6 +8,14 @@
 #include "task_state_segment.h"
 #include "initialize.h"
 
+#define APPLICATION_SEGMENT_DESCRIPTOR(Limit, Address, Attribute) { \
+    .limit     = (Limit),                                           \
+    .address0  = (Address),                                         \
+    .address1  = ((Address) >> 16) & 0xFF,                          \
+    .attribute = (Attribute),                                       \
+    .address2  = ((Address) >> 24) & 0xFF                           \
+}
+
 /**
  * A static, constant global variable that represents the TSS.
  *
@@ -16,15 +24,6 @@
  */
 __attribute__((aligned(0x1000)))
 static struct task_state_segment global_task_state_segment;
-
-#define APPLICATION_SEGMENT_DESCRIPTOR(Limit, Address, Attribute)   \
-{                                                                   \
-    .limit     = (Limit),                                           \
-    .address0  = (Address),                                         \
-    .address1  = ((Address) >> 16) & 0xFF,                          \
-    .attribute = (Attribute),                                       \
-    .address2  = ((Address) >> 24) & 0xFF                           \
-}
 
 /**
  * A static, constant global variable that represents the GDT.
@@ -92,13 +91,15 @@ static int initialize_global_task_state_segment(void)
     global_task_state_segment.rsp[1] = 0x00;
     global_task_state_segment.rsp[2] = 0x00;
 
-    global_task_state_segment.interrupt_stack_table[0] = 0x00; // TODO:
-    global_task_state_segment.interrupt_stack_table[1] = 0x00; // TODO:
-    global_task_state_segment.interrupt_stack_table[2] = 0x00; // TODO:
-    global_task_state_segment.interrupt_stack_table[3] = 0x00; // TODO:
-    global_task_state_segment.interrupt_stack_table[4] = 0x00; // TODO:
-    global_task_state_segment.interrupt_stack_table[5] = 0x00; // TODO:
-    global_task_state_segment.interrupt_stack_table[6] = 0x00; // TODO:
+    const page_frame_t interrupt_stack = request_page_frames(512);
+
+    global_task_state_segment.interrupt_stack_table[0] = (uint64_t)interrupt_stack;
+    global_task_state_segment.interrupt_stack_table[1] = (uint64_t)interrupt_stack;
+    global_task_state_segment.interrupt_stack_table[2] = (uint64_t)interrupt_stack;
+    global_task_state_segment.interrupt_stack_table[3] = (uint64_t)interrupt_stack;
+    global_task_state_segment.interrupt_stack_table[4] = (uint64_t)interrupt_stack;
+    global_task_state_segment.interrupt_stack_table[5] = (uint64_t)interrupt_stack;
+    global_task_state_segment.interrupt_stack_table[6] = (uint64_t)interrupt_stack;
 
     // This effectively disables the bitmap field of the TSS.
     global_task_state_segment.io_bitmap_base = sizeof(global_task_state_segment) + 1;
