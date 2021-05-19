@@ -1,3 +1,4 @@
+#include <interrupts/initialize.h>
 #include <kernel/boot_info.h>
 #include <kernel/error.h>
 #include <kernel/shell.h>
@@ -26,6 +27,7 @@ int _start(const struct kernel_boot_info boot_info)
     }
     change_current_page_map(&kernel_page_info);
     initialize_segmentation();
+    initialize_interrupts();
 
     start_shell();
 
