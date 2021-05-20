@@ -1,10 +1,24 @@
 #ifndef _MEMORY_PAGING_H
 #define _MEMORY_PAGING_H
 
-#include "paging_type.h"
+#include <stdint.h>
 
-int init_kernel_page_map(struct paging_info *paging_info);
-int map_page(struct paging_info *paging_info, uint64_t virtual_address, uint64_t physical_address);
-void change_current_page_map(struct paging_info *paging_info);
+#include <general/address.h>
+
+#include "page_frame_size.h"
+
+#define PAGE_SIZE (PAGE_FRAME_SIZE)
+#define PAGE_NULL ((void *)(0xFFFFFFFFFFFFFFFF))
+
+struct paging_data {
+    uint64_t *level4_table;
+};
+
+int initialize_kernel_page_map(struct paging_data *const paging_data);
+
+int map_page(struct paging_data *const paging_data,
+        address_t virtual_address, address_t physical_address);
+
+void change_current_page_map(struct paging_data paging_data);
 
 #endif
