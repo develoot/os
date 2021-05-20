@@ -1,18 +1,18 @@
 #include <interrupts/initialize.h>
-#include <kernel/boot_info.h>
+#include <kernel/boot_data.h>
 #include <kernel/error.h>
 #include <kernel/shell.h>
 #include <memory/page_frame_allocator.h>
 #include <memory/paging.h>
 #include <memory/segmentation/initialize.h>
 
-int _start(const struct kernel_boot_info boot_info)
+int _start(const struct kernel_boot_data boot_data)
 {
     int result;
 
-    init_print(boot_info.frame_buffer_info, boot_info.psf1_info);
+    init_print(boot_data.frame_buffer_data, boot_data.psf1_data);
 
-    result = initialize_page_frame_allocator(boot_info.memory_map_info);
+    result = initialize_page_frame_allocator(boot_data.memory_map_data);
     if (KERNEL_ERROR(result)) {
         print_string("InitPFAllocError ");
         while (1) {}

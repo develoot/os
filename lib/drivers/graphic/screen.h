@@ -10,7 +10,7 @@ struct pixel_color {
     uint8_t blue;
 };
 
-struct graphic_frame_buffer_info {
+struct graphic_frame_buffer_data {
     uint64_t address;
     uint64_t size;
     uint64_t width;
@@ -19,7 +19,7 @@ struct graphic_frame_buffer_info {
     EFI_GRAPHICS_PIXEL_FORMAT pixel_format;
 };
 
-void draw_block(struct graphic_frame_buffer_info *buffer_info, uint64_t x, uint64_t y,
+void draw_block(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
         uint64_t block_size, struct pixel_color color);
 
 #endif

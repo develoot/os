@@ -56,15 +56,15 @@ static inline enum boolean get_bit(uint8_t *const bitmap, uint64_t bit_index)
     return (bitmap[bit_index / 8] & (1 << (bit_index % 8))) > 0;
 }
 
-static uint64_t get_total_uefi_frame_number(struct uefi_memory_map_info memory_map_info)
+static uint64_t get_total_uefi_frame_number(struct uefi_memory_map_data memory_map_data)
 {
     uint64_t total_uefi_frame_number = 0;
 
     FOR_EACH_DESCRIPTOR(
             descriptor,
-            memory_map_info.memory_descriptor_buffer,
-            memory_map_info.memory_descriptor_buffer_size,
-            memory_map_info.memory_descriptor_size) {
+            memory_map_data.memory_descriptor_buffer,
+            memory_map_data.memory_descriptor_buffer_size,
+            memory_map_data.memory_descriptor_size) {
         total_uefi_frame_number += descriptor->NumberOfPages;
     }
 
@@ -72,13 +72,13 @@ static uint64_t get_total_uefi_frame_number(struct uefi_memory_map_info memory_m
 }
 
 static int initialize_page_frame_bitmap(uint8_t *bitmap,
-        struct uefi_memory_map_info memory_map_info)
+        struct uefi_memory_map_data memory_map_data)
 {
     FOR_EACH_DESCRIPTOR(
             descriptor,
-            memory_map_info.memory_descriptor_buffer,
-            memory_map_info.memory_descriptor_buffer_size,
-            memory_map_info.memory_descriptor_size) {
+            memory_map_data.memory_descriptor_buffer,
+            memory_map_data.memory_descriptor_buffer_size,
+            memory_map_data.memory_descriptor_size) {
         switch (descriptor->Type) {
         case EfiReservedMemoryType:
         case EfiLoaderCode:
@@ -108,9 +108,9 @@ static int initialize_page_frame_bitmap(uint8_t *bitmap,
     return 0;
 }
 
-int initialize_page_frame_allocator(struct uefi_memory_map_info memory_map_info)
+int initialize_page_frame_allocator(struct uefi_memory_map_data memory_map_data)
 {
-    uint64_t total_uefi_frame_number = get_total_uefi_frame_number(memory_map_info);
+    uint64_t total_uefi_frame_number = get_total_uefi_frame_number(memory_map_data);
     if (total_uefi_frame_number <= 0) {
         return 1;
     }
@@ -128,7 +128,7 @@ int initialize_page_frame_allocator(struct uefi_memory_map_info memory_map_info)
     global_page_frame_allocator_data.free_page_frame_number  = total_uefi_frame_number;
 
     int result = initialize_page_frame_bitmap(global_page_frame_allocator_data.bitmap,
-            memory_map_info);
+            memory_map_data);
     if (result != 0) {
         return 1;
     }

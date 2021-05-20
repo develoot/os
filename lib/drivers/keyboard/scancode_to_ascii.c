@@ -1,7 +1,7 @@
 #include "keyboard_manager.h"
 #include "scancode_to_ascii.h"
 
-extern struct keyboard_manager_info global_keyboard_manager_info;
+extern struct keyboard_manager_data global_keyboard_manager_data;
 
 struct scancode_to_ascii_table_entry {
     char normal_code;
@@ -122,18 +122,18 @@ static inline enum boolean is_numbpad(uint8_t scancode)
 static inline enum boolean should_use_combined_key(uint8_t scancode)
 {
     uint8_t down_scancode = scancode & 0x7F;
-    struct keyboard_manager_info *manager_info = &global_keyboard_manager_info;
+    struct keyboard_manager_data *manager_data = &global_keyboard_manager_data;
 
     if (is_alphabet(down_scancode)) {
-        return (manager_info->is_shift_down != manager_info->is_capslock_on);
+        return (manager_data->is_shift_down != manager_data->is_capslock_on);
     }
 
     if (is_number_or_symbol(down_scancode)) {
-        return (manager_info->is_shift_down);
+        return (manager_data->is_shift_down);
     }
 
     if (is_numbpad(down_scancode)) {
-        return (manager_info->is_numlock_on);
+        return (manager_data->is_numlock_on);
     }
 
     return 0;

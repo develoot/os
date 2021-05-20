@@ -3,7 +3,7 @@
 
 #include <general/boolean.h>
 
-struct keyboard_manager_info {
+struct keyboard_manager_data {
     enum boolean is_capslock_on;
     enum boolean is_numlock_on;
     enum boolean is_scroll_lock_on;

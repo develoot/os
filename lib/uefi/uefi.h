@@ -11,7 +11,7 @@
             (uint8_t *)name < (uint8_t *)buffer + buffer_size; \
             name = NEXT_DESCRIPTOR(name, descriptor_size))
 
-struct uefi_memory_map_info {
+struct uefi_memory_map_data {
     EFI_MEMORY_DESCRIPTOR *memory_descriptor_buffer;
     UINTN memory_descriptor_buffer_size;
     UINT32 memory_descriptor_version;

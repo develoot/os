@@ -4,7 +4,7 @@
 #include <efilib.h>
 #include <elf.h>
 
-#include <kernel/boot_info.h>
+#include <kernel/boot_data.h>
 #include <uefi/uefi.h>
 
 #define UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE (512)
@@ -61,7 +61,7 @@ static EFI_STATUS print_graphic_modes(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const 
 {
     EFI_STATUS status;
 
-    EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info = NULL;
+    EFI_GRAPHICS_OUTPUT_MODE_dataRMATION *info = NULL;
     uint64_t info_size = 0;
 
     for (uint64_t i = 0; i < graphics_output->Mode->MaxMode; ++i) {
@@ -104,8 +104,8 @@ EFI_STATUS open_file(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_sy
     return EFI_SUCCESS;
 }
 
-EFI_STATUS get_graphic_frame_buffer_info(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output,
-        struct kernel_boot_info *const boot_info)
+EFI_STATUS get_graphic_frame_buffer_data(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output,
+        struct kernel_boot_data *const boot_data)
 {
     /* Unsupported pixel format. */
     if (graphics_output->Mode->Info->PixelFormat != PixelRedGreenBlueReserved8BitPerColor
@@ -117,20 +117,20 @@ EFI_STATUS get_graphic_frame_buffer_info(const EFI_GRAPHICS_OUTPUT_PROTOCOL *con
     print_graphic_modes(graphics_output);
 #endif
 
-    struct graphic_frame_buffer_info *const buffer_info = &boot_info->frame_buffer_info;
+    struct graphic_frame_buffer_data *const buffer_data = &boot_data->frame_buffer_data;
 
-    buffer_info->address            = graphics_output->Mode->FrameBufferBase;
-    buffer_info->size               = graphics_output->Mode->FrameBufferSize;
-    buffer_info->width              = graphics_output->Mode->Info->HorizontalResolution;
-    buffer_info->height             = graphics_output->Mode->Info->VerticalResolution;
-    buffer_info->pixel_format       = graphics_output->Mode->Info->PixelFormat;
-    buffer_info->pixel_per_scanline = graphics_output->Mode->Info->PixelsPerScanLine;
+    buffer_data->address            = graphics_output->Mode->FrameBufferBase;
+    buffer_data->size               = graphics_output->Mode->FrameBufferSize;
+    buffer_data->width              = graphics_output->Mode->Info->HorizontalResolution;
+    buffer_data->height             = graphics_output->Mode->Info->VerticalResolution;
+    buffer_data->pixel_format       = graphics_output->Mode->Info->PixelFormat;
+    buffer_data->pixel_per_scanline = graphics_output->Mode->Info->PixelsPerScanLine;
 
     return EFI_SUCCESS;
 }
 
 EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
-        struct kernel_boot_info *const boot_info, EFI_FILE_PROTOCOL *const root,
+        struct kernel_boot_data *const boot_data, EFI_FILE_PROTOCOL *const root,
         const CHAR16 *const path)
 {
     EFI_STATUS status;
@@ -141,18 +141,18 @@ EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_fi
         return status;
     }
 
-    uint64_t header_size = sizeof(boot_info->psf1_info.header);
-    uefi_call_wrapper(font_file->Read, 3, font_file, &header_size, &boot_info->psf1_info.header);
-    if (boot_info->psf1_info.header.magic[0] != PSF1_MAGIC0
-            && boot_info->psf1_info.header.magic[1] != PSF1_MAGIC1) {
+    uint64_t header_size = sizeof(boot_data->psf1_data.header);
+    uefi_call_wrapper(font_file->Read, 3, font_file, &header_size, &boot_data->psf1_data.header);
+    if (boot_data->psf1_data.header.magic[0] != PSF1_MAGIC0
+            && boot_data->psf1_data.header.magic[1] != PSF1_MAGIC1) {
         return EFI_ABORTED;
     }
 
     uint64_t glyph_bufffer_size = 0;
-    switch (boot_info->psf1_info.header.mode) {
+    switch (boot_data->psf1_data.header.mode) {
     case PSF1_MODE256:
     case PSF1_MODEHASTAB:
-        glyph_bufffer_size = boot_info->psf1_info.header.glyph_size * 256;
+        glyph_bufffer_size = boot_data->psf1_data.header.glyph_size * 256;
         break;
     case PSF1_MODE512:
     case PSF1_MODEHASSEQ:
@@ -162,19 +162,19 @@ EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_fi
     }
 
     status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, glyph_bufffer_size,
-            (void **)&boot_info->psf1_info.glyph_buffer);
+            (void **)&boot_data->psf1_data.glyph_buffer);
     if (EFI_ERROR(status)) {
         return status;
     }
 
     uefi_call_wrapper(font_file->SetPosition, 2, font_file, header_size);
     uefi_call_wrapper(font_file->Read, 3, font_file, &glyph_bufffer_size,
-            boot_info->psf1_info.glyph_buffer);
+            boot_data->psf1_data.glyph_buffer);
 
     return EFI_SUCCESS;
 }
 
-EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
+EFI_STATUS load_kernel_elf(struct kernel_boot_data *const boot_data,
         const EFI_FILE_PROTOCOL *const kernel_file)
 {
     EFI_STATUS status;
@@ -246,7 +246,7 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
             : total_kernel_memory_size / EFI_PAGE_SIZE;
 
     status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData,
-            number_of_pages, (void **)&boot_info->kernel_start_address);
+            number_of_pages, (void **)&boot_data->kernel_start_address);
     if (EFI_ERROR(status)) {
         return status;
     }
@@ -275,7 +275,7 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
      * The base address is the difference between the truncated memory address and the truncated
      * `p_vaddr` value.
      */
-    uint64_t base_address = boot_info->kernel_start_address;
+    uint64_t base_address = boot_data->kernel_start_address;
     uint64_t absolute_offset = base_address > smallest_vaddr ? base_address - smallest_vaddr
         : smallest_vaddr - base_address;
     uint64_t current_segment_file_size = 0;
@@ -300,26 +300,26 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_info *const boot_info,
         }
     }
 
-    boot_info->kernel_end_address = current_load_address + last_loadable_segment_size;
+    boot_data->kernel_end_address = current_load_address + last_loadable_segment_size;
 
     return 0;
 }
 
-EFI_STATUS get_memory_map_info(struct kernel_boot_info *const boot_info,
+EFI_STATUS get_memory_map_data(struct kernel_boot_data *const boot_data,
         EFI_MEMORY_DESCRIPTOR *const descriptor_buffer)
 {
     EFI_STATUS status;
 
-    boot_info->memory_map_info.memory_descriptor_buffer = descriptor_buffer;
-    boot_info->memory_map_info.memory_descriptor_buffer_size =
+    boot_data->memory_map_data.memory_descriptor_buffer = descriptor_buffer;
+    boot_data->memory_map_data.memory_descriptor_buffer_size =
                         sizeof(EFI_MEMORY_DESCRIPTOR) * UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE;
 
     status = uefi_call_wrapper(BS->GetMemoryMap, 5,
-            &boot_info->memory_map_info.memory_descriptor_buffer_size,
-            boot_info->memory_map_info.memory_descriptor_buffer,
-            &boot_info->memory_map_info.memory_map_key,
-            &boot_info->memory_map_info.memory_descriptor_size,
-            &boot_info->memory_map_info.memory_descriptor_version);
+            &boot_data->memory_map_data.memory_descriptor_buffer_size,
+            boot_data->memory_map_data.memory_descriptor_buffer,
+            &boot_data->memory_map_data.memory_map_key,
+            &boot_data->memory_map_data.memory_descriptor_size,
+            &boot_data->memory_map_data.memory_descriptor_version);
     if (EFI_ERROR(status)) {
         return status;
     }
@@ -332,7 +332,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     EFI_STATUS status;
     InitializeLib(image_handle, system_table);
 
-    struct kernel_boot_info boot_info;
+    struct kernel_boot_data boot_data;
 
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system = NULL;
     status = uefi_call_wrapper(BS->LocateProtocol, 3, &gEfiSimpleFileSystemProtocolGuid, NULL,
@@ -361,7 +361,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 
     Print(L"Load kernel ELF file.\n");
 
-    status = load_kernel_elf(&boot_info, kernel_file);
+    status = load_kernel_elf(&boot_data, kernel_file);
     if (EFI_ERROR(status)) {
         Print(L"Failed to load kernel ELF file. %r\n", status);
         goto ERROR;
@@ -369,11 +369,11 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 
     Print(L"Kernel Info:\n");
     Print(L"StartAddress: 0x%X, EndAddress: 0x%X\n",
-            boot_info.kernel_start_address, boot_info.kernel_end_address);
+            boot_data.kernel_start_address, boot_data.kernel_end_address);
 
     Print(L"Get graphic frame buffer info.\n");
 
-    status = get_graphic_frame_buffer_info(graphics_output, &boot_info);
+    status = get_graphic_frame_buffer_data(graphics_output, &boot_data);
     if (EFI_ERROR(status)) {
         Print(L"Failed to get graphic frame buffer information. %r\n", status);
         goto ERROR;
@@ -381,25 +381,25 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 
     Print(L"Graphic Frame Buffer Info:\n");
     Print(L"BaseAddress: 0x%X, BufferSize: %u, Width: %u, Height: %u\n",
-            boot_info.frame_buffer_info.address,
-            boot_info.frame_buffer_info.size,
-            boot_info.frame_buffer_info.width,
-            boot_info.frame_buffer_info.height);
+            boot_data.frame_buffer_data.address,
+            boot_data.frame_buffer_data.size,
+            boot_data.frame_buffer_data.width,
+            boot_data.frame_buffer_data.height);
 
     Print(L"Load PSF1 font.\n");
 
-    status = load_font_psf1(simple_file_system, &boot_info, NULL, L"zap-light16.psf");
+    status = load_font_psf1(simple_file_system, &boot_data, NULL, L"zap-light16.psf");
     if (EFI_ERROR(status)) {
         Print(L"Failed to load PSF1 font. %r\n", status);
         goto ERROR;
     }
 
     Print(L"PSF1 Font Info:\n");
-    Print(L"GlyphSize: %d\n", boot_info.psf1_info.header.glyph_size);
+    Print(L"GlyphSize: %d\n", boot_data.psf1_data.header.glyph_size);
 
     Print(L"Get memory map of UEFI system.\n");
 
-    status = get_memory_map_info(&boot_info, descriptor_buffer);
+    status = get_memory_map_data(&boot_data, descriptor_buffer);
     if (EFI_ERROR(status)) {
         Print(L"Failed to get memory map of UEFI system. %r\n", status);
         goto ERROR;
@@ -408,21 +408,21 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     Print(L"Exit boot services.\n");
 
     uefi_call_wrapper(BS->ExitBootServices, 2,
-            image_handle, boot_info.memory_map_info.memory_map_key);
+            image_handle, boot_data.memory_map_data.memory_map_key);
 
 #ifdef DEBUG_BOOT_MEMORY
-    print_memory_map(boot_info.memory_map_info.memory_descriptor_buffer,
-            boot_info.memory_map_info.memory_descriptor_buffer_size,
-            boot_info.memory_map_info.memory_descriptor_size);
+    print_memory_map(boot_data.memory_map_data.memory_descriptor_buffer,
+            boot_data.memory_map_data.memory_descriptor_buffer_size,
+            boot_data.memory_map_data.memory_descriptor_size);
 #endif
 
     Print(L"Start kernel.\n");
 
-    int (*start_kernel)(struct kernel_boot_info) =
-        (__attribute__((sysv_abi)) int (*)(const struct kernel_boot_info))
-            boot_info.kernel_start_address;
+    int (*start_kernel)(struct kernel_boot_data) =
+        (__attribute__((sysv_abi)) int (*)(const struct kernel_boot_data))
+            boot_data.kernel_start_address;
 
-    Print(L"%d\n", start_kernel(boot_info));
+    Print(L"%d\n", start_kernel(boot_data));
 
     return EFI_SUCCESS;
 

@@ -9,7 +9,7 @@
 
 typedef void *page_frame_t;
 
-int initialize_page_frame_allocator(struct uefi_memory_map_info memory_map_info);
+int initialize_page_frame_allocator(struct uefi_memory_map_data memory_map_data);
 uint64_t get_total_page_frame_number(void);
 /**
  * Return `size` numbers of continuous page frame.

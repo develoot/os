@@ -12,25 +12,25 @@ static uint32_t get_pixel(EFI_GRAPHICS_PIXEL_FORMAT pixel_format, struct pixel_c
     }
 }
 
-static void draw_pixel(struct graphic_frame_buffer_info *buffer_info, uint64_t x, uint64_t y,
+static void draw_pixel(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
         struct pixel_color color)
 {
-    if (x > buffer_info->width || y > buffer_info->height) {
+    if (x > buffer_data->width || y > buffer_data->height) {
         return;
     }
 
-    uint32_t *frame_buffer = (uint32_t *)buffer_info->address;
+    uint32_t *frame_buffer = (uint32_t *)buffer_data->address;
 
-    frame_buffer[x + y * buffer_info->pixel_per_scanline]
-        = get_pixel(buffer_info->pixel_format, color);
+    frame_buffer[x + y * buffer_data->pixel_per_scanline]
+        = get_pixel(buffer_data->pixel_format, color);
 }
 
-void draw_block(struct graphic_frame_buffer_info *buffer_info, uint64_t x, uint64_t y,
+void draw_block(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
         uint64_t block_size, struct pixel_color color)
 {
     for (uint64_t i = 0; i < block_size; ++i) {
         for (uint64_t j = 0; j < block_size; ++j) {
-            draw_pixel(buffer_info, x + j, y + i, color);
+            draw_pixel(buffer_data, x + j, y + i, color);
         }
     }
 }

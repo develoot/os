@@ -35,7 +35,7 @@ enum port {
     port1 = 0x64
 };
 
-struct keyboard_manager_info global_keyboard_manager_info;
+struct keyboard_manager_data global_keyboard_manager_data;
 
 static uint8_t read_port(enum port port)
 {
@@ -84,10 +84,10 @@ static uint8_t get_scancode(void)
 
 void init_keyboard_manager(void)
 {
-    global_keyboard_manager_info.is_capslock_on = false;
-    global_keyboard_manager_info.is_numlock_on = false;
-    global_keyboard_manager_info.is_scroll_lock_on = false;
-    global_keyboard_manager_info.is_shift_down = false;
+    global_keyboard_manager_data.is_capslock_on = false;
+    global_keyboard_manager_data.is_numlock_on = false;
+    global_keyboard_manager_data.is_scroll_lock_on = false;
+    global_keyboard_manager_data.is_shift_down = false;
 }
 
 int change_keyboard_led(enum boolean is_capslock_on, enum boolean is_numlock_on,
@@ -138,36 +138,36 @@ void update_global_keyboard_manager_state(uint8_t scancode)
 {
     if ((scancode == KEYBOARD_SCANCODE_LSHIFT_DOWN)
             || (scancode == KEYBOARD_SCANCODE_RSHIFT_DOWN)) {
-        global_keyboard_manager_info.is_shift_down = true;
+        global_keyboard_manager_data.is_shift_down = true;
         return;
     }
 
     if ((scancode == KEYBOARD_SCANCODE_LSHIFT_UP)
             || (scancode == KEYBOARD_SCANCODE_RSHIFT_UP)) {
-        global_keyboard_manager_info.is_shift_down = false;
+        global_keyboard_manager_data.is_shift_down = false;
         return;
     }
 
     if (scancode == KEYBOARD_SCANCODE_CAPSLOCK_DOWN) {
-        global_keyboard_manager_info.is_capslock_on = !global_keyboard_manager_info.is_capslock_on;
+        global_keyboard_manager_data.is_capslock_on = !global_keyboard_manager_data.is_capslock_on;
         goto CHANGE_LED_STATUS;
     }
 
     if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
-        global_keyboard_manager_info.is_numlock_on = !global_keyboard_manager_info.is_numlock_on;
+        global_keyboard_manager_data.is_numlock_on = !global_keyboard_manager_data.is_numlock_on;
         goto CHANGE_LED_STATUS;
     }
 
     if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
-        global_keyboard_manager_info.is_scroll_lock_on =
-            !global_keyboard_manager_info.is_scroll_lock_on;
+        global_keyboard_manager_data.is_scroll_lock_on =
+            !global_keyboard_manager_data.is_scroll_lock_on;
         goto CHANGE_LED_STATUS;
     }
 
 CHANGE_LED_STATUS:
-    change_keyboard_led(global_keyboard_manager_info.is_capslock_on,
-            global_keyboard_manager_info.is_numlock_on,
-            global_keyboard_manager_info.is_scroll_lock_on);
+    change_keyboard_led(global_keyboard_manager_data.is_capslock_on,
+            global_keyboard_manager_data.is_numlock_on,
+            global_keyboard_manager_data.is_scroll_lock_on);
 }
 
 int activate_keyboard(void)
