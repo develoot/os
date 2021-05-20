@@ -1,2 +1,0 @@
-1. Makefile dose not generate dependency rule for dependency rule itself.
-   It seems `sed` command in Makefile dose not behave as i expect.

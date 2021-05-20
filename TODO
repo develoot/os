@@ -1,2 +1,0 @@
-1. Get cpu properties by using CPUID instruction.
-As this os dose not meant to be industrial-level os, we can do things naive for now.
