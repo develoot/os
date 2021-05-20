@@ -2,7 +2,6 @@
 #define _DRIVERS_KEYBOARD_SCANCODE_TO_ASCII_H
 
 #include <stdint.h>
-#include <general/boolean.h>
 
 #define KEY_NONE                (0x00)
 #define KEY_ENTER               ('\n')

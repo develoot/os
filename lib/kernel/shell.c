@@ -9,7 +9,7 @@ void start_shell(void)
     char input;
     int result;
 
-    init_keyboard_manager();
+    initialize_keyboard_manager();
 
     result = activate_keyboard();
     assert(result == 0, "Failed to activate keyboard");

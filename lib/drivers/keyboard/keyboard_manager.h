@@ -10,10 +10,22 @@ struct keyboard_manager_data {
     enum boolean is_shift_down;
 };
 
-void init_keyboard_manager(void);
+void initialize_keyboard_manager(void);
+
 int activate_keyboard(void);
+
 void enable_a20_gate(void);
+
 void reset_processor(void);
-int get_keyboard_input(char *out);
+
+int get_keyboard_input(char *const out);
+
+enum boolean is_capslock_on(void);
+
+enum boolean is_numlock_on(void);
+
+enum boolean is_scroll_lock_on(void);
+
+enum boolean is_shift_down(void);
 
 #endif
