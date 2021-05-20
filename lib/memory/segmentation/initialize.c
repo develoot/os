@@ -85,7 +85,7 @@ static struct global_descriptor_table global_descriptor_table = {
     .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00F2),
 };
 
-static int initialize_global_task_state_segment(void)
+static inline void initialize_global_task_state_segment(void)
 {
     global_task_state_segment.rsp[0] = 0x00;
     global_task_state_segment.rsp[1] = 0x00;
@@ -103,29 +103,10 @@ static int initialize_global_task_state_segment(void)
 
     // This effectively disables the bitmap field of the TSS.
     global_task_state_segment.io_bitmap_base = sizeof(global_task_state_segment) + 1;
-
-    return 0;
 }
 
-void initialize_segmentation(void)
+static inline void register_task_state_segment(void)
 {
-    assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
-    assert(sizeof(struct global_descriptor_table_register_entry) == 10, "GDTR entry is not packed");
-    assert(sizeof(struct application_segment_descriptor) == 8, "Segment Descriptor is not packed");
-    assert(sizeof(struct task_state_segment) % 8 == 0, "TSS is not packed");
-
-    struct global_descriptor_table_register_entry register_entry = {
-        .table_limit = sizeof(global_descriptor_table) - 1,
-        .table_address = (uint64_t)&global_descriptor_table
-    };
-
-    initialize_global_task_state_segment();
-
-    /*
-     * We can't assign the address of the TSS into member of GDT because address of the
-     * `global_task_state_segment` is not a compile-time constant.
-     */
-
     const uint64_t task_state_segment_address = (uint64_t)&global_task_state_segment;
 
     global_descriptor_table.task_state.limit     = sizeof(global_task_state_segment);
@@ -146,13 +127,28 @@ void initialize_segmentation(void)
     global_descriptor_table.task_state.address2  = (task_state_segment_address >> 24) & 0xFF;
     global_descriptor_table.task_state.address3  = (task_state_segment_address >> 32) & 0xFFFFFFFF;
     global_descriptor_table.task_state.reserved  = 0;
+}
+
+void initialize_segmentation(void)
+{
+    assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
+    assert(sizeof(struct global_descriptor_table_register_entry) == 10, "GDTR entry is not packed");
+    assert(sizeof(struct application_segment_descriptor) == 8, "Segment Descriptor is not packed");
+    assert(sizeof(struct task_state_segment) % 8 == 0, "TSS is not packed");
+
+    initialize_global_task_state_segment();
+
+    register_task_state_segment();
+
+    const struct global_descriptor_table_register_entry register_entry = {
+        .table_limit = sizeof(global_descriptor_table) - 1,
+        .table_address = (uint64_t)&global_descriptor_table
+    };
+
+    load_global_descriptor_table(&register_entry);
 
     const uint16_t task_state_segment_offset = offsetof(struct global_descriptor_table, task_state);
 
-    load_global_descriptor_table(&register_entry);
-    asm __volatile__("ltr %0" // Load the TSS descriptor's offset from the base of the GDT.
-        :
-        : "m"(task_state_segment_offset)
-        :
-    );
+    // Load the TSS segment.
+    asm __volatile__("ltr %0" : : "m"(task_state_segment_offset));
 }
