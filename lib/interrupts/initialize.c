@@ -12,7 +12,7 @@
 #define register_interrupt_handler(Interrupt, Handler, Selector, Attribute) ({                      \
     global_interrupt_descriptor_table.Interrupt.offset0 = (address_t)(Handler) & 0xFFFF;            \
     global_interrupt_descriptor_table.Interrupt.offset1 = ((address_t)(Handler) >> 16) & 0xFFFF;    \
-    global_interrupt_descriptor_table.Interrupt.offset2 = ((address_t)(Handler) >> 32) & 0xFFFFFFF; \
+    global_interrupt_descriptor_table.Interrupt.offset2 = ((address_t)(Handler) >> 32) & 0xFFFFFFFF;\
     global_interrupt_descriptor_table.Interrupt.segment_selector = (Selector);                      \
     global_interrupt_descriptor_table.Interrupt.attribute = (Attribute);                            \
 })
