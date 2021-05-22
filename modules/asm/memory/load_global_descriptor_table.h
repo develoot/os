@@ -3,7 +3,7 @@
 
 #include <memory/segmentation/global_descriptor_table.h>
 
-void load_global_descriptor_table(
-        const struct global_descriptor_table_register_entry *register_entry);
+void load_global_descriptor_table(const struct global_descriptor_table_register_entry
+        *register_entry);
 
 #endif

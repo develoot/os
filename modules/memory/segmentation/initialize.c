@@ -2,10 +2,12 @@
 
 #include <asm/memory/load_global_descriptor_table.h>
 #include <debug/assert.h>
+#include <general/address.h>
 #include <memory/page_frame_allocator.h>
 
 #include "global_descriptor_table.h"
 #include "task_state_segment.h"
+
 #include "initialize.h"
 
 #define APPLICATION_SEGMENT_DESCRIPTOR(Limit, Address, Attribute) { \
@@ -22,7 +24,7 @@
  * Base address of this structure should be aligned on an eight-byte boundary to yield the best
  * processor performance.
  */
-__attribute__((aligned(0x1000)))
+__attribute__((aligned(0x08)))
 static struct task_state_segment global_task_state_segment;
 
 /**
@@ -31,7 +33,7 @@ static struct task_state_segment global_task_state_segment;
  * Base address of this structure should be aligned on an eight-byte boundary to yield the best
  * processor performance.
  */
-__attribute__((aligned(0x1000)))
+__attribute__((aligned(0x08)))
 static struct global_descriptor_table global_descriptor_table = {
     .null = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00),
     /*
@@ -82,10 +84,10 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b0010  // Readable and writable.
      */
-    .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00F2),
+    .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00F2)
 };
 
-static inline void initialize_global_task_state_segment(void)
+static inline void initialize_task_state_segment(void)
 {
     global_task_state_segment.rsp[0] = 0x00;
     global_task_state_segment.rsp[1] = 0x00;
@@ -107,7 +109,7 @@ static inline void initialize_global_task_state_segment(void)
 
 static inline void register_task_state_segment(void)
 {
-    const uint64_t task_state_segment_address = (uint64_t)&global_task_state_segment;
+    const address_t task_state_segment_address = (address_t)&global_task_state_segment;
 
     global_descriptor_table.task_state.limit     = sizeof(global_task_state_segment);
     global_descriptor_table.task_state.address0  = task_state_segment_address;
@@ -136,8 +138,7 @@ void initialize_segmentation(void)
     assert(sizeof(struct application_segment_descriptor) == 8, "Segment Descriptor is not packed");
     assert(sizeof(struct task_state_segment) % 8 == 0, "TSS is not packed");
 
-    initialize_global_task_state_segment();
-
+    initialize_task_state_segment();
     register_task_state_segment();
 
     const struct global_descriptor_table_register_entry register_entry = {
