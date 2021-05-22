@@ -6,7 +6,7 @@ export LD := ld
 SCRIPTS := $(CURDIR)/scripts
 ETC := $(CURDIR)/etc
 SRC := $(CURDIR)/src
-export LIB := $(CURDIR)/lib
+export LIB := $(CURDIR)/modules
 
 TARGETS = boot kernel
 
