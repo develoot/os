@@ -3,7 +3,7 @@
 
 static struct console_data global_console_data;
 
-int init_print(struct graphic_frame_buffer_data frame_buffer_data, struct psf1_data psf1_data)
+int initialize_print(struct graphic_frame_buffer_data frame_buffer_data, struct psf1_data psf1_data)
 {
     global_console_data.frame_buffer_data = frame_buffer_data;
     global_console_data.psf1_data = psf1_data;

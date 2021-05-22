@@ -36,7 +36,7 @@ struct console_data {
     uint64_t pixel_block_size;
 };
 
-int init_print(struct graphic_frame_buffer_data frame_buffer_data, struct psf1_data psf1_data);
+int initialize_print(struct graphic_frame_buffer_data frame_buffer_data, struct psf1_data psf1_data);
 void print_char(char character);
 void print_string(char *string);
 void print_format(char *format, ...);
