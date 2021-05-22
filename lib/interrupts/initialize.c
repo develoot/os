@@ -1,9 +1,12 @@
+#include <cpu/port.h>
 #include <general/address.h>
 #include <memory/segmentation/global_descriptor_table.h>
 #include <memory/segmentation/segment_selector.h>
 
 #include "exception_handlers.h"
 #include "interrupt_descriptor_table.h"
+#include "programmable_interrupt_controller.h"
+
 #include "initialize.h"
 
 #define register_interrupt_handler(Interrupt, Handler, Selector, Attribute) ({                      \
@@ -21,6 +24,19 @@
 })
 
 static struct interrupt_descriptor_table global_interrupt_descriptor_table;
+
+static void initialize_programmable_interrupt_controller(void)
+{
+    write_port(pic_master0, ICW1);
+    write_port(pic_master1, ICW2MASTER);
+    write_port(pic_master1, ICW3MASTER);
+    write_port(pic_master1, ICW4);
+
+    write_port(pic_slave0, ICW1);
+    write_port(pic_slave1, ICW2SLAVE);
+    write_port(pic_slave1, ICW3SLAVE);
+    write_port(pic_slave1, ICW4);
+}
 
 int initialize_interrupts(void)
 {
@@ -44,6 +60,8 @@ int initialize_interrupts(void)
     register_exception_handler(machine_check,                dummy_handler);
     register_exception_handler(simd_floating_point,          dummy_handler);
     register_exception_handler(virtualization,               dummy_handler);
+
+    initialize_programmable_interrupt_controller();
 
     struct interrupt_descriptor_table_register_entry register_entry = {
         .table_limit = sizeof(global_interrupt_descriptor_table) - 1,
