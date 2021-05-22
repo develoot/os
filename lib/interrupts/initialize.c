@@ -38,6 +38,13 @@ static void initialize_programmable_interrupt_controller(void)
     write_port(pic_slave1, ICW4);
 }
 
+static void mask_interrupt(uint16_t mask)
+{
+    // Check OCW1 command in the 8259A data sheet for detailed description.
+    write_port(pic_master1, (uint8_t)mask);
+    write_port(pic_slave1, (uint8_t)(mask >> 8));
+}
+
 int initialize_interrupts(void)
 {
     register_exception_handler(divide_error,                 dummy_handler);
