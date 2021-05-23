@@ -5,6 +5,8 @@
 
 void initialize_programmable_interrupt_controller(void);
 
-void mask_interrupt(uint16_t mask);
+void set_interrupt_mask(uint16_t mask);
+
+void notify_end_of_interrupt(uint8_t interrupt_number);
 
 #endif
