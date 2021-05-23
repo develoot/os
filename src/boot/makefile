@@ -2,7 +2,7 @@ SYSLIB = /usr/lib
 EFIINC = /usr/include/efi
 EFILDS = $(SYSLIB)/elf_$(ARCH)_efi.lds
 EFICRT = $(SYSLIB)/crt0-efi-$(ARCH).o
-CFLAGS = -I$(LIB) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
+CFLAGS = -I$(MODULES) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
 		-fpie -ffreestanding -fno-stack-protector -fno-stack-check -fshort-wchar \
 		-mno-red-zone -maccumulate-outgoing-args -DEFI_FUNCTION_WRAPPER -Wall -Wextra -g
 LDFLAGS = -T$(EFILDS) -nostdlib -znocombreloc -shared -Bsymbolic -L$(SYSLIB) $(EFICRT)
@@ -20,13 +20,13 @@ boot.efi: boot.so
 boot.so: $(OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@ -lefi -lgnuefi
 
-PHONY += clean
-clean:
-	rm -f boot.efi boot.so $(OBJS) $(DEPS)
-
 %.d: %.c
 	rm -f $@; \
 	$(CC) $(CFLAGS) -MM -MT "$@ $(@:.d=.o)" $< -o $@ \
+
+PHONY += clean
+clean:
+	rm -f boot.efi boot.so $(OBJS) $(DEPS)
 
 include $(DEPS)
 

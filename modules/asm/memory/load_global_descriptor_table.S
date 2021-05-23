@@ -8,6 +8,8 @@
 
 [bits 64]
 
+section .text
+
 load_global_descriptor_table:
 	lgdt [rdi]
 
@@ -24,4 +26,4 @@ load_global_descriptor_table:
 	push rdi
 	retfq ; Far return.
 
-GLOBAL load_global_descriptor_table
+global load_global_descriptor_table

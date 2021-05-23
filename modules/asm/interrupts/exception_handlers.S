@@ -4,9 +4,11 @@
 
 ; TODO: Use segment selector definitions in "global_descriptor_table.h" header.
 
-@macro save_context 0
+[bits 64]
+
+%macro save_context 0
 	push rbp
-	mov rbp rsp
+	mov rbp, rsp
 
 	push rax
 	push rbx
@@ -35,9 +37,9 @@
 	mov es, ax
 	mov gs, ax
 	mov fs,ax
-@endmacro
+%endmacro
 
-@macro load_context 0
+%macro load_context 0
 	pop gs
 	pop fs
 	pop rax
@@ -61,7 +63,11 @@
 	pop rbx
 	pop rax
 	pop rbp
-@endmacro
+%endmacro
+
+extern notify_end_of_interrupt
+
+section .text
 
 timeout_handler:
 	save_context
