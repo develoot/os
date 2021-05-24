@@ -92,6 +92,8 @@ global virtualization_routine               ; Exception 19
 global timeout_routine                      ; Interrupt 32
 global keyboard_routine                     ; Interrupt 33
 
+global null_routine
+
 section .text
 
 divide_error_routine:
@@ -287,6 +289,15 @@ keyboard_routine:
     save_context
 
     mov rdi, 33
+    call dummy_interrupt_handler
+
+    load_context
+    iretq
+
+null_routine:
+    save_context
+
+    mov rdi, 100
     call dummy_interrupt_handler
 
     load_context

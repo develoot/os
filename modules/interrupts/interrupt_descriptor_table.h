@@ -90,49 +90,4 @@ struct interrupt_gate_descriptor {
 #define interrupt_gate_descriptor_attribute(IST, Type, DPL) \
     ((uint16_t)((IST << 1) | (Type << 8) | (DPL << 13) | (INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P)))
 
-/**
- * The data structure which holds all interrupt gate descriptors.
- *
- * The IDTR register should point to base address of this data structure on memory.
- */
-struct interrupt_descriptor_table {
-    // Exceptions.
-    struct interrupt_gate_descriptor divide_error;
-    struct interrupt_gate_descriptor debug;
-    struct interrupt_gate_descriptor non_maskable_interrupt;
-    struct interrupt_gate_descriptor break_point;
-    struct interrupt_gate_descriptor overflow;
-    struct interrupt_gate_descriptor bound_range_exceeded;
-    struct interrupt_gate_descriptor invalid_opcode;
-    struct interrupt_gate_descriptor device_not_available;
-    struct interrupt_gate_descriptor double_fault;
-    struct interrupt_gate_descriptor coprocessor_segment_overrun;
-    struct interrupt_gate_descriptor invalid_task_state_segment;
-    struct interrupt_gate_descriptor segment_not_present;
-    struct interrupt_gate_descriptor stack_full;
-    struct interrupt_gate_descriptor general_protection;
-    struct interrupt_gate_descriptor page_fault;
-    struct interrupt_gate_descriptor x87_fpu_floating_point_error;
-    struct interrupt_gate_descriptor alignment_check;
-    struct interrupt_gate_descriptor machine_check;
-    struct interrupt_gate_descriptor simd_floating_point;
-    struct interrupt_gate_descriptor virtualization;
-    struct interrupt_gate_descriptor null0;
-    struct interrupt_gate_descriptor null1;
-    struct interrupt_gate_descriptor null2;
-    struct interrupt_gate_descriptor null3;
-    struct interrupt_gate_descriptor null4;
-    struct interrupt_gate_descriptor null5;
-    struct interrupt_gate_descriptor null6;
-    struct interrupt_gate_descriptor null7;
-    struct interrupt_gate_descriptor null8;
-    struct interrupt_gate_descriptor null9;
-    struct interrupt_gate_descriptor null11;
-    struct interrupt_gate_descriptor null12;
-
-    // Interrupts.
-    struct interrupt_gate_descriptor timeout;
-    struct interrupt_gate_descriptor keyboard;
-} __attribute__((packed, aligned(0x1000)));
-
 #endif

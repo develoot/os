@@ -27,4 +27,7 @@ void virtualization_routine(void);
 void timeout_routine(void);
 void keyboard_routine(void);
 
+// Debug.
+void null_routine(void);
+
 #endif
