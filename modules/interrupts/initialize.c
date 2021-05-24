@@ -1,4 +1,3 @@
-#include <cpu/port.h>
 #include <general/address.h>
 #include <memory/segmentation/global_descriptor_table.h>
 #include <memory/segmentation/segment_selector.h>
