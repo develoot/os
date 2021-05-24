@@ -96,6 +96,7 @@ struct interrupt_gate_descriptor {
  * The IDTR register should point to base address of this data structure on memory.
  */
 struct interrupt_descriptor_table {
+    // Exceptions.
     struct interrupt_gate_descriptor divide_error;
     struct interrupt_gate_descriptor debug;
     struct interrupt_gate_descriptor non_maskable_interrupt;
@@ -116,6 +117,22 @@ struct interrupt_descriptor_table {
     struct interrupt_gate_descriptor machine_check;
     struct interrupt_gate_descriptor simd_floating_point;
     struct interrupt_gate_descriptor virtualization;
+    struct interrupt_gate_descriptor null0;
+    struct interrupt_gate_descriptor null1;
+    struct interrupt_gate_descriptor null2;
+    struct interrupt_gate_descriptor null3;
+    struct interrupt_gate_descriptor null4;
+    struct interrupt_gate_descriptor null5;
+    struct interrupt_gate_descriptor null6;
+    struct interrupt_gate_descriptor null7;
+    struct interrupt_gate_descriptor null8;
+    struct interrupt_gate_descriptor null9;
+    struct interrupt_gate_descriptor null11;
+    struct interrupt_gate_descriptor null12;
+
+    // Interrupts.
+    struct interrupt_gate_descriptor timeout;
+    struct interrupt_gate_descriptor keyboard;
 } __attribute__((packed, aligned(0x1000)));
 
 #endif

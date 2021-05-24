@@ -41,14 +41,14 @@ void set_interrupt_mask(uint16_t mask)
     write_port(pic_slave1, (uint8_t)(mask >> 8));
 }
 
-void notify_end_of_interrupt(uint8_t interrupt_number)
+void notify_end_of_interrupt(uint8_t interrupt_request_number)
 {
     // Check OCW2 command in the 8259A data sheet for detailed description.
     write_port(pic_master1, OCW2);
 
     // You need to notify to the slave if the interrupt number is greater or equal to 8.
     // Consider the master-slave structure.
-    if (interrupt_number >= 8) {
+    if (interrupt_request_number >= 8) {
         write_port(pic_slave1, OCW2);
     }
 }
