@@ -23,6 +23,7 @@
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));   \
 })
 
+__attribute__((aligned(0x08)))
 static struct interrupt_descriptor_table global_interrupt_descriptor_table;
 
 int initialize_interrupts(void)
