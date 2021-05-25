@@ -2,7 +2,7 @@ SYSLIB = /usr/lib
 EFIINC = /usr/include/efi
 CFLAGS = -I$(MODULES) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
 		 -Wall -Wextra -fpie -ffreestanding -fshort-wchar -g -DDEBUG_ASSERT
-LDFLAGS = -Bstatic -Bsymbolic -pie -nostdlib --gc-sections --print-gc-sections --no-undefined-version
+LDFLAGS = -Bstatic -Bsymbolic -pie -nostdlib --gc-sections --no-undefined-version
 ASMFLAGS =
 
 SRCS = $(shell find . -name '*.c' -type 'f') $(shell find $(MODULES) -name '*.c' -type 'f')
