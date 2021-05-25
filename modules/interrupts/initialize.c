@@ -13,7 +13,7 @@
 __attribute__((aligned(0x08)))
 static struct interrupt_gate_descriptor global_interrupt_descriptor_table[INTERRUPT_TABLE_SIZE];
 
-static inline void register_interrupt_routine(struct interrupt_gate_descriptor *descriptor,
+static void register_interrupt_routine(struct interrupt_gate_descriptor *descriptor,
         void (*handler), uint16_t selector, uint16_t attribute)
 {
     descriptor->offset0 = (address_t)handler & 0xFFFF;
@@ -21,9 +21,10 @@ static inline void register_interrupt_routine(struct interrupt_gate_descriptor *
     descriptor->offset2 = ((address_t)handler >> 32) & 0xFFFFFFFF;
     descriptor->segment_selector = selector;
     descriptor->attribute = attribute;
+    descriptor->reserved = 0;
 }
 
-static inline void register_exception_routine(struct interrupt_gate_descriptor *descriptor,
+static void register_exception_routine(struct interrupt_gate_descriptor *descriptor,
         void (*handler))
 {
     register_interrupt_routine(descriptor, handler,

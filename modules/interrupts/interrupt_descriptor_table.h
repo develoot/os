@@ -37,7 +37,7 @@ struct interrupt_gate_descriptor {
     uint16_t attribute;
     uint16_t offset1;
     uint32_t offset2;
-    uint64_t reserved;
+    uint32_t reserved;
 } __attribute__((packed));
 
 /**
