@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 #include <efi.h>
 #include <efilib.h>
 #include <elf.h>
@@ -10,10 +8,10 @@
 #define UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE (512)
 #define MAX_PROGRAM_HEADER_TABLE_SIZE      (512)
 
-EFI_MEMORY_DESCRIPTOR descriptor_buffer[UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE];
-Elf64_Phdr program_header_table[MAX_PROGRAM_HEADER_TABLE_SIZE];
+static EFI_MEMORY_DESCRIPTOR descriptor_buffer[UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE];
+static Elf64_Phdr program_header_table[MAX_PROGRAM_HEADER_TABLE_SIZE];
 
-static inline int strcmp(const char *const a, const char *const b, uint64_t size)
+static int strcmp(const char *const a, const char *const b, uint64_t size)
 {
     for (uint64_t i = 0; i < size; ++i) {
         if (a[i] != b[i]) {
@@ -191,92 +189,98 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_data *const boot_data,
             || elf_header.e_type              != ET_EXEC
             || elf_header.e_version           != EV_CURRENT)
     {
+        Print(L"Kernel ELF header is invalid.\n");
         return EFI_ABORTED;
     }
 
-    /* Read program header table. */
+    /* Read the program header table. */
     uint64_t program_header_table_size = elf_header.e_phentsize * elf_header.e_phnum;
     uefi_call_wrapper(kernel_file->SetPosition, 2, kernel_file, elf_header.e_phoff);
-    uefi_call_wrapper(kernel_file->Read, 3, kernel_file, &program_header_table_size,
-            program_header_table);
+    uefi_call_wrapper(kernel_file->Read, 3,
+            kernel_file, &program_header_table_size, program_header_table);
     if (program_header_table_size != elf_header.e_phentsize * elf_header.e_phnum) {
+        Print(L"Failed to read the program hdaer table.\n");
+        Print(L"Read program header size %lu", program_header_table_size);
         return EFI_ABORTED;
     }
 
     /*
      * Get total memory size required to load the kernel.
      *
-     * Loadable segment entries in the program header table appear in ascending order,
-     * sorted on the `p_vaddr` member.
+     * Note that loadable segment entries in the program header table appear in ascending order,
+     * sorted on the `p_vaddr` member value.
      */
 
-    uint64_t total_kernel_memory_size = 0;
-
     /*
-     * Find the smallest vaddr value.
+     * Find the smallest `p_vaddr` value first.
      *
-     * As loadable segment entries are sorted in ascending order, the first appears has the
-     * smallest vaddr value.
+     * As loadable segment entries are sorted on the `p_vaddr` value in ascending order, the first
+     * appears has the smallest vaddr value.
      */
     uint64_t smallest_vaddr = 0;
     for (uint64_t i = 0; i < elf_header.e_phnum; ++i) {
         if (program_header_table[i].p_type != PT_LOAD) {
             continue;
         }
+
         smallest_vaddr = program_header_table[i].p_vaddr;
         break;
     }
 
-    /* Find the largest vaddr value and get the segment size of last loadable segment. */
+    /* Find the largest `p_vaddr` value and get the segment size of the last loadable segment. */
     uint64_t largest_vaddr = 0;
     uint64_t last_loadable_segment_size = 0;
     for (uint64_t i = 0; i < elf_header.e_phnum; ++i) {
         if (program_header_table[i].p_type != PT_LOAD) {
             continue;
         }
+
         largest_vaddr = program_header_table[i].p_vaddr;
         last_loadable_segment_size = program_header_table[i].p_memsz;
     }
 
-    total_kernel_memory_size = largest_vaddr - smallest_vaddr + last_loadable_segment_size;
+    /* Calcuate the required memory size. */
+    uint64_t total_kernel_memory_size = largest_vaddr - smallest_vaddr + last_loadable_segment_size;
 
     /* Allocate pages to load the kernel. */
-    uint64_t number_of_pages = total_kernel_memory_size % EFI_PAGE_SIZE > 0
-            ? (total_kernel_memory_size / EFI_PAGE_SIZE) + 1
-            : total_kernel_memory_size / EFI_PAGE_SIZE;
-
-    status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData,
-            number_of_pages, (void **)&boot_data->kernel_start_address);
+    uint64_t number_of_pages
+        = (total_kernel_memory_size % EFI_PAGE_SIZE) > 0
+        ? (total_kernel_memory_size / EFI_PAGE_SIZE) + 1
+        : (total_kernel_memory_size / EFI_PAGE_SIZE);
+    status = uefi_call_wrapper(BS->AllocatePages, 4,
+            AllocateAnyPages, EfiLoaderData, number_of_pages, (void **)&boot_data->kernel_start_address);
     if (EFI_ERROR(status)) {
         return status;
     }
 
     /*
-     * Load the kernel into the memory.
+     * Load the kernel into memory.
      *
-     * Because position-independent code uses relative addressing between segments, the
-     * difference between virtual addresses in memory must match the difference between virtual
-     * addresses in the file.
+     * Because position-independent code uses relative addressing between segments, the difference
+     * between virtual addresses in memory must match the difference between virtual addresses in
+     * the file.
      *
      * The difference between the virtual address of any segment in memory and the corresponding
-     * virtual address in the file is thus a single constant value for any one executable or
-     * shared object in a given process. This difference is "base address". One use of the base
-     * address is to reloacte the memory image of the program during dynamic linking.
+     * virtual address in the file is thus a single constant value for any one executable or shared
+     * object in a given process. This difference is "base address". One use of the base address is
+     * to reloacte the memory image of the program during dynamic linking.
      *
      * An executable or shared object's base address is calculated during execution from three
      * values: the virtual memory load address, the maximum page size, and the lowest virtual
      * address of a program's loadable segment.
      *
      * To compute the base address, one determines the memory address associated with the lowest
-     * `p_vaddr` value for a `PT_LOAD` segment. This address is truncated to the nearest
-     * multiple of the maximum page size. The corresponding `p_vaddr` value itself is also
-     * truncated to the nearest multiple of the maximum page size.
+     * `p_vaddr` value for a `PT_LOAD` segment. This address is truncated to the nearest multiple of
+     * the maximum page size. The corresponding `p_vaddr` value itself is also truncated to the
+     * nearest multiple of the maximum page size.
      *
      * The base address is the difference between the truncated memory address and the truncated
      * `p_vaddr` value.
      */
     uint64_t base_address = boot_data->kernel_start_address;
-    uint64_t absolute_offset = base_address > smallest_vaddr ? base_address - smallest_vaddr
+    uint64_t absolute_offset
+        = base_address > smallest_vaddr
+        ? base_address - smallest_vaddr
         : smallest_vaddr - base_address;
     uint64_t current_segment_file_size = 0;
     uint64_t current_load_address = 0;
@@ -287,15 +291,17 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_data *const boot_data,
         }
 
         current_segment_file_size = program_header_table[i].p_filesz;
-        current_load_address = base_address > smallest_vaddr
+        current_load_address
+            = base_address > smallest_vaddr
             ? program_header_table[i].p_vaddr + absolute_offset
             : program_header_table[i].p_vaddr - absolute_offset;
 
         uefi_call_wrapper(kernel_file->SetPosition, 2,
                 kernel_file, program_header_table[i].p_offset);
-        uefi_call_wrapper(kernel_file->Read, 3, kernel_file, &current_segment_file_size,
-                (void *)current_load_address);
+        uefi_call_wrapper(kernel_file->Read, 3,
+                kernel_file, &current_segment_file_size, (void *)current_load_address);
         if (current_segment_file_size != program_header_table[i].p_filesz) {
+            Print(L"Failed to load the kernel.\n");
             return EFI_ABORTED;
         }
     }
@@ -335,8 +341,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     struct kernel_boot_data boot_data;
 
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system = NULL;
-    status = uefi_call_wrapper(BS->LocateProtocol, 3, &gEfiSimpleFileSystemProtocolGuid, NULL,
-            (void **)&simple_file_system);
+    status = uefi_call_wrapper(BS->LocateProtocol, 3,
+            &gEfiSimpleFileSystemProtocolGuid, NULL, (void **)&simple_file_system);
     if (EFI_ERROR(status)) {
         Print(L"Failed to locate SimpleFileSystemProtocol. %r\n", status);
         goto ERROR;
