@@ -186,8 +186,8 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_data *const boot_data,
             || elf_header.e_ident[EI_DATA]    != ELFDATA2LSB
             || elf_header.e_ident[EI_VERSION] != EV_CURRENT
             || elf_header.e_machine           != EM_X86_64
-            || elf_header.e_type              != ET_EXEC
-            || elf_header.e_version           != EV_CURRENT)
+            || elf_header.e_version           != EV_CURRENT
+            || (elf_header.e_type != ET_EXEC && elf_header.e_type != ET_DYN))
     {
         Print(L"Kernel ELF header is invalid.\n");
         return EFI_ABORTED;
