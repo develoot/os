@@ -28,7 +28,7 @@ static void register_exception_routine(struct interrupt_gate_descriptor *descrip
         void (*handler))
 {
     register_interrupt_routine(descriptor, handler,
-            segment_selector(GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX, 0, 0),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 }
 
@@ -62,16 +62,16 @@ int initialize_interrupts(void)
     }
 
     register_interrupt_routine(&table[32], timeout_routine,
-            segment_selector(GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX, 0, 0),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[33], keyboard_routine,
-            segment_selector(GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX, 0, 0),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     for (uint64_t i = 34; i < INTERRUPT_TABLE_SIZE; i++) {
         register_interrupt_routine(&table[i], null_routine,
-                segment_selector(GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX, 0, 0),
+                segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
                 interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
     }
 
