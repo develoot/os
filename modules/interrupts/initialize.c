@@ -1,3 +1,4 @@
+#include <debug/assert.h>
 #include <general/address.h>
 #include <memory/segmentation/global_descriptor_table.h>
 #include <memory/segmentation/segment_selector.h>
@@ -34,6 +35,8 @@ static void register_exception_routine(struct interrupt_gate_descriptor *descrip
 
 int initialize_interrupts(void)
 {
+    assert(sizeof(struct interrupt_gate_descriptor) != 128, "Size of IDT descriptor is invalid");
+
     struct interrupt_gate_descriptor *const table = global_interrupt_descriptor_table;
 
     register_exception_routine(&table[0],  divide_error_routine);
