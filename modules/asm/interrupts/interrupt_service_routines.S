@@ -65,9 +65,6 @@
     pop rbp
 %endmacro
 
-extern dummy_exception_handler
-extern dummy_interrupt_handler
-
 global divide_error_routine                 ; Exception 0
 global debug_routine                        ; Exception 1
 global non_maskable_interrupt_routine       ; Exception 2
@@ -93,6 +90,9 @@ global timeout_routine                      ; Interrupt 32
 global keyboard_routine                     ; Interrupt 33
 
 global null_routine
+
+extern dummy_exception_handler
+extern dummy_interrupt_handler
 
 section .text
 

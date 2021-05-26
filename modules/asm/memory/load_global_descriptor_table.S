@@ -13,7 +13,7 @@ section .text
 load_global_descriptor_table:
 	lgdt [rdi]
 
-	mov ax, 0x00 ; Null segment selector.
+	mov ax, 0x10 ; Kernel data segment selector.
 	mov ds, ax
 	mov es, ax
 	mov ss, ax
