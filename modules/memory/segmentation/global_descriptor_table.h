@@ -141,8 +141,6 @@ struct application_segment_descriptor {
  * set, the segment limit is interpreted in 4KB units.
  *
  * This dose not affect the granularity of the base address; it is always byte granular.
- *
- * In IA-32e mode, this flag is always cleared because we don't use limit field of the descriptor.
  */
 #define SEGMENT_ATTRIBUTE_G     (0x8000)
 

@@ -32,14 +32,14 @@ struct task_state_segment_descriptor {
  * In IA-32e mode, this structure is only used for IST because hardware task management is disabled.
  */
 struct task_state_segment {
-    uint32_t reserved1;
+    uint32_t reserved0;
     /** This field is not used in IA-32e IST operations. */
     uint64_t rsp[3];
-    uint64_t reserved2;
+    uint64_t reserved1;
     uint64_t interrupt_stack_table[7];
+    uint32_t reserved2;
     uint32_t reserved3;
-    uint32_t reserved4;
-    uint16_t reserved5;
+    uint16_t reserved4;
     uint16_t io_bitmap_base;
 } __attribute__((packed));
 

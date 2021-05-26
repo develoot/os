@@ -37,58 +37,64 @@ __attribute__((aligned(0x08)))
 static struct global_descriptor_table global_descriptor_table = {
     .null = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00),
     /*
-     * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
+     * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
      * SEGMENT_ATTRIBUTE_DB = 0         // Have to be 0 when L is set.
      * SEGMENT_ATTRIBUTE_L = 1          // Indicates that this is 64-bit code segment.
      * SEGMENT_ATTRIBUTE_AVL = 0        // We don't use this bit in this OS.
-     * SEGMENT_ATTRIBUTE_LIMIT = 0b0000 // We don't use this field in IA-32e segment descriptor.
+     * SEGMENT_ATTRIBUTE_LIMIT = 0b1111 // This dose not have any effect in the IA-32e mode.
      * SEGMENT_ATTRIBUTE_P = 1          // Have to be set for all valid segments.
      * SEGMENT_ATTRIBUTE_DPL = 0b00     // This is kernel segment. Set the highest privilege.
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
-     * SEGMENT_ATTRIBUTE_TYPE = 0b1000  // Executable, not conforming and not readable.
+     * SEGMENT_ATTRIBUTE_TYPE = 0b1010  // Executable and readable, but not conforming.
      */
-    .kernel_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x2098),
+    .kernel_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xAF9A),
     /*
-     * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
-     * SEGMENT_ATTRIBUTE_DB = 0         // This flag is ignored in data segment descriptor.
+     * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
+     * SEGMENT_ATTRIBUTE_DB = 1         // This flag is ignored in data segment descriptor.
      * SEGMENT_ATTRIBUTE_L = 0          // This flag should be unset in data segment descriptor.
      * SEGMENT_ATTRIBUTE_AVL = 0        // We don't use this bit in this OS.
-     * SEGMENT_ATTRIBUTE_LIMIT = 0b0000 // We don't use this field in IA-32e segment descriptor.
+     * SEGMENT_ATTRIBUTE_LIMIT = 0b1111 // This dose not have any effect in the IA-32e mode.
      * SEGMENT_ATTRIBUTE_P = 1          // Have to be set for all valid segments.
      * SEGMENT_ATTRIBUTE_DPL = 0b00     // This is kernel segment. Set the highest privilege.
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b0010  // Readable and writable.
      */
-    .kernel_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x0092),
+    .kernel_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xCF92),
     .user_null = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00),
     /*
-     * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
+     * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
      * SEGMENT_ATTRIBUTE_DB = 0         // Have to be 0 when L is set.
      * SEGMENT_ATTRIBUTE_L = 1          // Indicates that this is 64-bit code segment.
      * SEGMENT_ATTRIBUTE_AVL = 0        // We don't use this bit in this OS.
-     * SEGMENT_ATTRIBUTE_LIMIT = 0b0000 // We don't use this field in IA-32e segment descriptor.
+     * SEGMENT_ATTRIBUTE_LIMIT = 0b1111 // This dose not have any effect in the IA-32e mode.
      * SEGMENT_ATTRIBUTE_P = 1          // Have to be set for all valid segments.
      * SEGMENT_ATTRIBUTE_DPL = 0b11     // This is user segment. Set the lowest privilege.
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
-     * SEGMENT_ATTRIBUTE_TYPE = 0b1000  // Executable, not conforming and not readable.
+     * SEGMENT_ATTRIBUTE_TYPE = 0b1010  // Executable and readable, but not conforming.
      */
-    .user_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x20F8),
+    .user_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xAFFA),
     /*
-     * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
-     * SEGMENT_ATTRIBUTE_DB = 0         // This flag is ignored in data segment descriptor.
+     * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
+     * SEGMENT_ATTRIBUTE_DB = 1         // This flag is ignored in data segment descriptor.
      * SEGMENT_ATTRIBUTE_L = 0          // This flag should be unset in data segment descriptor.
      * SEGMENT_ATTRIBUTE_AVL = 0        // We don't use this bit in this OS.
-     * SEGMENT_ATTRIBUTE_LIMIT = 0b0000 // We don't use this field in IA-32e segment descriptor.
+     * SEGMENT_ATTRIBUTE_LIMIT = 0b1111 // We don't use this field in IA-32e segment descriptor.
      * SEGMENT_ATTRIBUTE_P = 1          // Have to be set for all valid segments.
      * SEGMENT_ATTRIBUTE_DPL = 0b11     // This is user segment. Set the lowest privilege.
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b0010  // Readable and writable.
      */
-    .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00F2)
+    .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xCFF2)
 };
 
 static inline void initialize_task_state_segment(void)
 {
+    global_task_state_segment.reserved0 = 0;
+    global_task_state_segment.reserved1 = 0;
+    global_task_state_segment.reserved2 = 0;
+    global_task_state_segment.reserved3 = 0;
+    global_task_state_segment.reserved4 = 0;
+
     global_task_state_segment.rsp[0] = 0x00;
     global_task_state_segment.rsp[1] = 0x00;
     global_task_state_segment.rsp[2] = 0x00;
@@ -115,7 +121,7 @@ static inline void register_task_state_segment(void)
     global_descriptor_table.task_state.address0  = task_state_segment_address;
     global_descriptor_table.task_state.address1  = (task_state_segment_address >> 16) & 0xFF;
     /*
-     * SEGMENT_ATTRIBUTE_G = 0          // Have to be cleared in IA-32e descriptor.
+     * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
      * SEGMENT_ATTRIBUTE_DB = 0         // This flag is not used in TSS descriptor.
      * SEGMENT_ATTRIBUTE_L = 0          // This flag should be unset in non-code segment descriptor.
      * SEGMENT_ATTRIBUTE_AVL = 0        // We don't use this bit in this OS.
@@ -125,7 +131,7 @@ static inline void register_task_state_segment(void)
      * SEGMENT_ATTRIBUTE_S = 0          // This is a system segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b1001  // This is 64-bit Availabe TSS.
      */
-    global_descriptor_table.task_state.attribute = 0x0089;
+    global_descriptor_table.task_state.attribute = 0x8089;
     global_descriptor_table.task_state.address2  = (task_state_segment_address >> 24) & 0xFF;
     global_descriptor_table.task_state.address3  = (task_state_segment_address >> 32) & 0xFFFFFFFF;
     global_descriptor_table.task_state.reserved  = 0;
