@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include <debug/assert.h>
 
 #include "page_frame_allocator.h"
@@ -5,7 +7,10 @@
 
 #include "paging.h"
 
-#define PAGE_NOT_PRESENT(Table, Offset) (!(Table[Offset] & GENERAL_PAGE_STRUCTURE_ENTRY_PRESENT))
+static inline bool page_not_present(uint64_t *const table, const uint16_t offset)
+{
+    return !(table[offset] & GENERAL_PAGE_STRUCTURE_ENTRY_PRESENT);
+}
 
 static inline uint16_t get_level4_table_offset(address_t virtual_address)
 {
@@ -102,7 +107,7 @@ int map_page(struct paging_data *const paging_data,
 
     uint64_t *const level4_table = paging_data->level4_table;
     uint64_t level4_table_offset = get_level4_table_offset(virtual_page_address);
-    if (PAGE_NOT_PRESENT(level4_table, level4_table_offset)) {
+    if (page_not_present(level4_table, level4_table_offset)) {
         result = set_new_page_structure(&level4_table[level4_table_offset]);
         if (result != 0) {
             return 1;
@@ -111,7 +116,7 @@ int map_page(struct paging_data *const paging_data,
 
     uint64_t *const level3_table = get_next_page_structure(level4_table[level4_table_offset]);
     uint64_t level3_table_offset = get_level3_table_offset(virtual_page_address);
-    if (PAGE_NOT_PRESENT(level3_table, level3_table_offset)) {
+    if (page_not_present(level3_table, level3_table_offset)) {
         result = set_new_page_structure(&level3_table[level3_table_offset]);
         if (result != 0) {
             return 1;
@@ -120,7 +125,7 @@ int map_page(struct paging_data *const paging_data,
 
     uint64_t *const level2_table = get_next_page_structure(level3_table[level3_table_offset]);
     uint64_t level2_table_offset = get_level2_table_offset(virtual_page_address);
-    if (PAGE_NOT_PRESENT(level2_table, level2_table_offset)) {
+    if (page_not_present(level2_table, level2_table_offset)) {
         result = set_new_page_structure(&level2_table[level2_table_offset]);
         if (result != 0) {
             return 1;

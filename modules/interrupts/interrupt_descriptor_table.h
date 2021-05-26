@@ -2,7 +2,9 @@
 #define _INTERRUPT_DESCRIPTOR_TABLE_H
 
 #include <stdint.h>
+
 #include <general/address.h>
+#include <general/inline.h>
 
 /**
  * A data structure to be loaded into IDTR register.
@@ -87,7 +89,13 @@ struct interrupt_gate_descriptor {
  */
 #define INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P    (0x8000)
 
-#define interrupt_gate_descriptor_attribute(IST, Type, DPL) \
-    ((uint16_t)((IST) | ((Type) << 8) | ((DPL) << 13) | INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P))
+always_inline uint16_t interrupt_gate_descriptor_attribute(uint8_t interrupt_stack_table_index,
+        uint16_t descriptor_type, uint8_t descriptor_privilege_level)
+{
+    return (uint16_t)(interrupt_stack_table_index
+            | descriptor_type << 8
+            | descriptor_privilege_level << 13
+            | INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P);
+}
 
 #endif
