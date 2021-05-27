@@ -1,13 +1,13 @@
 #ifndef _DRIVERS_KEYBOARD_KEYBOARD_MANAGER_H
 #define _DRIVERS_KEYBOARD_KEYBOARD_MANAGER_H
 
-#include <general/boolean.h>
+#include <stdbool.h>
 
 struct keyboard_manager_data {
-    enum boolean is_capslock_on;
-    enum boolean is_numlock_on;
-    enum boolean is_scroll_lock_on;
-    enum boolean is_shift_down;
+    bool is_capslock_on;
+    bool is_numlock_on;
+    bool is_scroll_lock_on;
+    bool is_shift_down;
 };
 
 void initialize_keyboard_manager(void);
@@ -20,12 +20,12 @@ void reset_processor(void);
 
 int get_keyboard_input(char *const out);
 
-enum boolean is_capslock_on(void);
+bool is_capslock_on(void);
 
-enum boolean is_numlock_on(void);
+bool is_numlock_on(void);
 
-enum boolean is_scroll_lock_on(void);
+bool is_scroll_lock_on(void);
 
-enum boolean is_shift_down(void);
+bool is_shift_down(void);
 
 #endif

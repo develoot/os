@@ -1,8 +1,9 @@
 /** TODO: Implement zoned page frame allocator. */
 
+#include <stdbool.h>
+
 #include <debug/assert.h>
 #include <general/address.h>
-#include <general/boolean.h>
 
 #include "page_frame_allocator.h"
 
@@ -37,21 +38,21 @@ static inline address_t convert_index_to_address(uint64_t page_frame_index)
     return page_frame_index * PAGE_FRAME_SIZE;
 }
 
-static inline void set_bit(uint8_t *const bitmap, uint64_t bit_index, enum boolean value)
+static inline void set_bit(uint8_t *const bitmap, uint64_t bit_index, bool value)
 {
     bitmap[bit_index / 8] &= ~(1 << (bit_index % 8));
     bitmap[bit_index / 8] |= (value << (bit_index % 8));
 }
 
 static inline void set_bits(uint8_t *const bitmap, uint64_t bit_index, uint64_t size,
-        enum boolean value)
+        bool value)
 {
     for (uint64_t i = 0; i < size; ++i) {
         set_bit(bitmap, bit_index + i, value);
     }
 }
 
-static inline enum boolean get_bit(uint8_t *const bitmap, uint64_t bit_index)
+static inline bool get_bit(uint8_t *const bitmap, uint64_t bit_index)
 {
     return (bitmap[bit_index / 8] & (1 << (bit_index % 8))) > 0;
 }

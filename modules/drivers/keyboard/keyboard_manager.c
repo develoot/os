@@ -34,12 +34,12 @@
 
 static struct keyboard_manager_data global_keyboard_manager_data;
 
-static inline enum boolean is_output_buffer_full(void)
+static inline bool is_output_buffer_full(void)
 {
     return (read_port(keyboard1) & KEYBOARD_STATUS_OUTB) > 0;
 }
 
-static inline enum boolean is_input_buffer_full(void)
+static inline bool is_input_buffer_full(void)
 {
     return (read_port(keyboard1) & KEYBOARD_STATUS_INPB) > 0;
 }
@@ -53,8 +53,7 @@ static uint8_t get_scancode(void)
     return read_port(keyboard0);
 }
 
-static int change_keyboard_led(enum boolean is_capslock_on, enum boolean is_numlock_on,
-        enum boolean is_scroll_lock_on)
+static int change_keyboard_led(bool is_capslock_on, bool is_numlock_on, bool is_scroll_lock_on)
 {
     uint64_t try = 0;
     while (is_input_buffer_full() == true && try++ < MAX_TRY) {}
@@ -217,22 +216,22 @@ int get_keyboard_input(char *out)
     return 0;
 }
 
-enum boolean is_capslock_on(void)
+bool is_capslock_on(void)
 {
     return global_keyboard_manager_data.is_capslock_on;
 }
 
-enum boolean is_numlock_on(void)
+bool is_numlock_on(void)
 {
     return global_keyboard_manager_data.is_numlock_on;
 }
 
-enum boolean is_scroll_lock_on(void)
+bool is_scroll_lock_on(void)
 {
     return global_keyboard_manager_data.is_scroll_lock_on;
 }
 
-enum boolean is_shift_down(void)
+bool is_shift_down(void)
 {
     return global_keyboard_manager_data.is_shift_down;
 }

@@ -98,26 +98,26 @@ static const struct scancode_to_ascii_table_entry conversion_table[] = {
     { KEY_F12, KEY_F12 }
 };
 
-static inline enum boolean is_alphabet(uint8_t scancode)
+static inline bool is_alphabet(uint8_t scancode)
 {
     return (conversion_table[scancode].normal_code >= 'a')
         && (conversion_table[scancode].normal_code <= 'z');
 }
 
-static inline enum boolean is_number_or_symbol(uint8_t scancode)
+static inline bool is_number_or_symbol(uint8_t scancode)
 {
     return (scancode >= 2)
         && (scancode <= 53)
         && (!is_alphabet(scancode));
 }
 
-static inline enum boolean is_numbpad(uint8_t scancode)
+static inline bool is_numbpad(uint8_t scancode)
 {
     return (scancode >= 71)
         && (scancode <= 83);
 }
 
-static inline enum boolean should_use_combined_key(uint8_t scancode)
+static inline bool should_use_combined_key(uint8_t scancode)
 {
     uint8_t down_scancode = scancode & 0x7F;
 
