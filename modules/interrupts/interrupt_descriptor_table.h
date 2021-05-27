@@ -92,7 +92,7 @@ struct interrupt_gate_descriptor {
 always_inline uint16_t interrupt_gate_descriptor_attribute(uint8_t interrupt_stack_table_index,
         uint16_t descriptor_type, uint8_t descriptor_privilege_level)
 {
-    return (uint16_t)(interrupt_stack_table_index | descriptor_type << 8
+    return (uint16_t)(interrupt_stack_table_index | descriptor_type
             | descriptor_privilege_level << 13 | INTERRUPT_GATE_DESCRIPTOR_ATTRIBUTE_P);
 }
 
