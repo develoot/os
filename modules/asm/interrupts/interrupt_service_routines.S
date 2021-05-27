@@ -34,7 +34,7 @@
     mov ds, ax
     mov es, ax
     mov gs, ax
-    mov fs,ax
+    mov fs, ax
 %endmacro
 
 %macro load_context 0
@@ -47,7 +47,6 @@
 
     pop r15
     pop r14
-    pop r13
     pop r13
     pop r12
     pop r11
