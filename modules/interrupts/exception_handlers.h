@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-void dummy_exception_handler(uint8_t exception_number);
-
+void dummy_exception_handler(uint8_t exception_number, uint64_t error_code);
 void divide_error_handler(void);
 void debug_handler(void);
 void non_maskable_interrupt_handler(void);
