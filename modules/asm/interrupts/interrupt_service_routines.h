@@ -22,12 +22,22 @@ void alignment_check_routine(void);
 void machine_check_routine(void);
 void simd_floating_point_routine(void);
 void virtualization_routine(void);
+void null_exception_routine(void);
 
 // Interrupt routines.
 void timeout_routine(void);
 void keyboard_routine(void);
-
-// A place holder.
-void null_routine(void);
+void slave_pic(void);
+void serial_port2(void);
+void serial_port1(void);
+void parallel_port2(void);
+void floppy_controller(void);
+void parallel_port1(void);
+void real_time_check(void);
+void mouse(void);
+void coprocessor(void);
+void hdd1(void);
+void hdd2(void);
+void null_interrupt_routine(void);
 
 #endif
