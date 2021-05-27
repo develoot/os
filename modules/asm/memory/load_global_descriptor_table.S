@@ -4,9 +4,9 @@
 ; This function also changes contents of segment registers according to the loaded GDT entry.
 ;--------------------------------------------------------------------------------------------------
 
-; TODO: Use segment selector definitions in "global_descriptor_table.h" header.
-
 [bits 64]
+
+global load_global_descriptor_table
 
 section .text
 
@@ -25,5 +25,3 @@ load_global_descriptor_table:
 	push rax
 	push rdi
 	retfq ; Far return.
-
-global load_global_descriptor_table

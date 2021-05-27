@@ -2,8 +2,6 @@
 ; Interrupt Service Routine (ISR) definitions for each exceptions.
 ;--------------------------------------------------------------------------------------------------
 
-; TODO: Use segment selector definitions in "global_descriptor_table.h" header.
-
 [bits 64]
 
 %macro save_context 0
