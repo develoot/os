@@ -6,4 +6,6 @@ enum boolean {
     true = 1
 };
 
+typedef enum boolean bool;
+
 #endif
