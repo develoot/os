@@ -40,4 +40,4 @@ clean:
 	done
 	rm -f image
 
-.PHONY: $(TARGET)
+.PHONY: $(PHONY)
