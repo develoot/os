@@ -73,31 +73,31 @@ int initialize_interrupts(void)
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[34], slave_pic,
+    register_interrupt_routine(&table[34], slave_pic_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[35], serial_port2,
+    register_interrupt_routine(&table[35], serial_port2_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[36], serial_port1,
+    register_interrupt_routine(&table[36], serial_port1_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[37], parallel_port2,
+    register_interrupt_routine(&table[37], parallel_port2_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[38], floppy_controller,
+    register_interrupt_routine(&table[38], floppy_controller_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[39], parallel_port1,
+    register_interrupt_routine(&table[39], parallel_port1_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[40], real_time_check,
+    register_interrupt_routine(&table[40], real_time_check_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
@@ -107,19 +107,19 @@ int initialize_interrupts(void)
                 interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
     }
 
-    register_interrupt_routine(&table[44], mouse,
+    register_interrupt_routine(&table[44], mouse_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[45], coprocessor,
+    register_interrupt_routine(&table[45], coprocessor_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[46], hdd1,
+    register_interrupt_routine(&table[46], hdd1_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
-    register_interrupt_routine(&table[47], hdd2,
+    register_interrupt_routine(&table[47], hdd2_routine,
             segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 

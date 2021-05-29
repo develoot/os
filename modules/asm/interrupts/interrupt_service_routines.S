@@ -87,17 +87,17 @@ global null_exception_routine               ; Exception 15, 20 ~ 31
 
 global timeout_routine                      ; Interrupt 32
 global keyboard_routine                     ; Interrupt 33
-global slave_pic                            ; Interrupt 34
-global serial_port2                         ; Interrupt 35
-global serial_port1                         ; Interrupt 36
-global parallel_port2                       ; Interrupt 37
-global floppy_controller                    ; Interrupt 38
-global parallel_port1                       ; Interrupt 39
-global real_time_check                      ; Interrupt 40
-global mouse                                ; Interrupt 44
-global coprocessor                          ; Interrupt 45
-global hdd1                                 ; Interrupt 46
-global hdd2                                 ; Interrupt 47
+global slave_pic_routine                    ; Interrupt 34
+global serial_port2_routine                 ; Interrupt 35
+global serial_port1_routine                 ; Interrupt 36
+global parallel_port2_routine               ; Interrupt 37
+global floppy_controller_routine            ; Interrupt 38
+global parallel_port1_routine               ; Interrupt 39
+global real_time_check_routine              ; Interrupt 40
+global mouse_routine                        ; Interrupt 44
+global coprocessor_routine                  ; Interrupt 45
+global hdd1_routine                         ; Interrupt 46
+global hdd2_routine                         ; Interrupt 47
 
 global null_interrupt_routine               ; Interrupt 41 ~ 43, 48 ~ 255
 
@@ -322,7 +322,7 @@ keyboard_routine:
     load_context
     iretq
 
-slave_pic:
+slave_pic_routine:
     save_context
 
     mov rdi, 34
@@ -331,7 +331,7 @@ slave_pic:
     load_context
     iretq
 
-serial_port2:
+serial_port2_routine:
     save_context
 
     mov rdi, 35
@@ -340,7 +340,7 @@ serial_port2:
     load_context
     iretq
 
-serial_port1:
+serial_port1_routine:
     save_context
 
     mov rdi, 36
@@ -349,7 +349,7 @@ serial_port1:
     load_context
     iretq
 
-parallel_port2:
+parallel_port2_routine:
     save_context
 
     mov rdi, 37
@@ -358,7 +358,7 @@ parallel_port2:
     load_context
     iretq
 
-floppy_controller:
+floppy_controller_routine:
     save_context
 
     mov rdi, 38
@@ -367,7 +367,7 @@ floppy_controller:
     load_context
     iretq
 
-parallel_port1:
+parallel_port1_routine:
     save_context
 
     mov rdi, 39
@@ -376,7 +376,7 @@ parallel_port1:
     load_context
     iretq
 
-real_time_check:
+real_time_check_routine:
     save_context
 
     mov rdi, 40
@@ -385,7 +385,7 @@ real_time_check:
     load_context
     iretq
 
-mouse:
+mouse_routine:
     save_context
 
     mov rdi, 44
@@ -394,7 +394,7 @@ mouse:
     load_context
     iretq
 
-coprocessor:
+coprocessor_routine:
     save_context
 
     mov rdi, 45
@@ -403,7 +403,7 @@ coprocessor:
     load_context
     iretq
 
-hdd1:
+hdd1_routine:
     save_context
 
     mov rdi, 46
@@ -412,7 +412,7 @@ hdd1:
     load_context
     iretq
 
-hdd2:
+hdd2_routine:
     save_context
 
     mov rdi, 47
