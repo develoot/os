@@ -2,7 +2,7 @@
 
 #include "circular_queue.h"
 
-void circular_queue_initialize(struct circular_queue_data *const circular_queue_data,
+void initialize_circular_queue(struct circular_queue_data *const circular_queue_data,
         uint8_t *const buffer, uint64_t buffer_size, uint64_t entry_size)
 {
     circular_queue_data->buffer = buffer;

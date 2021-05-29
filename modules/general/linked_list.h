@@ -19,7 +19,7 @@ struct linked_list_node {
     struct linked_list_node *previous;
 };
 
-always_inline void linked_list_initialize(struct linked_list_node *const head)
+always_inline void initialize_linked_list(struct linked_list_node *const head)
 {
     head->next = head;
     head->previous = head;
@@ -79,7 +79,7 @@ always_inline size_t linked_list_size(struct linked_list_node *const head)
     struct linked_list_node *cursor = NULL;
 
     linked_list_for_each_node(cursor, head) {
-        size++;
+        ++size;
     }
 
     return size;
