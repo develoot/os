@@ -14,7 +14,7 @@ void initialize_circular_queue(struct circular_queue_data *const circular_queue_
     circular_queue_data->tail_entry_index = 0;
 }
 
-bool circular_queue_push(struct circular_queue_data *const circular_queue_data,
+int circular_queue_push(struct circular_queue_data *const circular_queue_data,
         const uint8_t *entry)
 {
     uint8_t *const buffer = circular_queue_data->buffer;
@@ -22,7 +22,7 @@ bool circular_queue_push(struct circular_queue_data *const circular_queue_data,
     const uint64_t max_entry_number = circular_queue_data->max_entry_number;
 
     if (circular_queue_data->entry_number >= max_entry_number) {
-        return true;
+        return -1;
     }
 
     memory_copy(&buffer[circular_queue_data->tail_entry_index * entry_size], entry, entry_size);
@@ -31,10 +31,10 @@ bool circular_queue_push(struct circular_queue_data *const circular_queue_data,
     circular_queue_data->tail_entry_index += 1;
     circular_queue_data->tail_entry_index %= max_entry_number;
 
-    return false;
+    return 0;
 }
 
-bool circular_queue_pop(struct circular_queue_data *const circular_queue_data,
+int circular_queue_pop(struct circular_queue_data *const circular_queue_data,
         uint8_t *const destination)
 {
     uint8_t *const buffer = circular_queue_data->buffer;
@@ -42,7 +42,7 @@ bool circular_queue_pop(struct circular_queue_data *const circular_queue_data,
     const uint64_t max_entry_number = circular_queue_data->max_entry_number;
 
     if (circular_queue_data->entry_number <= 0) {
-        return true;
+        return -1;
     }
 
     memory_copy(destination,
@@ -52,5 +52,5 @@ bool circular_queue_pop(struct circular_queue_data *const circular_queue_data,
     circular_queue_data->head_entry_index += 1;
     circular_queue_data->head_entry_index %= max_entry_number;
 
-    return false;
+    return 0;
 }
