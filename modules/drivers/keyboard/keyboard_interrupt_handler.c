@@ -1,6 +1,7 @@
 #include <cpu/port.h>
 #include <general/circular_queue.h>
 #include <interrupts/control_interrupts.h>
+#include <interrupts/exception_vector_size.h>
 #include <interrupts/programmable_interrupt_controller.h>
 
 #include "keyboard_port_status.h"
@@ -23,6 +24,13 @@ void initialize_keyboard_queue(void)
             keyboard_queue_buffer, sizeof(keyboard_queue_buffer), sizeof(scancode_t));
 }
 
+always_inline void _keyboard_interrupt_handler(const uint8_t interrupt_number)
+{
+    const scancode_t scancode = read_port(keyboard0);
+    circular_queue_push(&keyboard_queue_data, &scancode);
+    notify_end_of_interrupt(interrupt_number - 32);
+}
+
 void keyboard_interrupt_handler(const uint8_t interrupt_number)
 {
     if (is_output_buffer_full() == false) {
@@ -31,14 +39,10 @@ void keyboard_interrupt_handler(const uint8_t interrupt_number)
 
     if ((read_rflags() & REGISTER_RFLAGS_INTERRUPT) > 0) {
         disable_interrupts();
-        const scancode_t scancode = read_port(keyboard0);
-        circular_queue_push(&keyboard_queue_data, &scancode);
-        notify_end_of_interrupt(interrupt_number - 32);
+        _keyboard_interrupt_handler(interrupt_number);
         enable_interrupts();
     } else {
-        const scancode_t scancode = read_port(keyboard0);
-        circular_queue_push(&keyboard_queue_data, &scancode);
-        notify_end_of_interrupt(interrupt_number - 32);
+        _keyboard_interrupt_handler(interrupt_number);
     }
 }
 
