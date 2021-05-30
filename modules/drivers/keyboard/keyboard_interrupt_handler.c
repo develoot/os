@@ -29,11 +29,17 @@ void keyboard_interrupt_handler(const uint8_t interrupt_number)
         return;
     }
 
-    disable_interrupts();
-    const scancode_t scancode = read_port(keyboard0);
-    circular_queue_push(&keyboard_queue_data, &scancode);
-    notify_end_of_interrupt(interrupt_number - 32);
-    enable_interrupts();
+    if ((read_rflags() & REGISTER_RFLAGS_INTERRUPT) > 0) {
+        disable_interrupts();
+        const scancode_t scancode = read_port(keyboard0);
+        circular_queue_push(&keyboard_queue_data, &scancode);
+        notify_end_of_interrupt(interrupt_number - 32);
+        enable_interrupts();
+    } else {
+        const scancode_t scancode = read_port(keyboard0);
+        circular_queue_push(&keyboard_queue_data, &scancode);
+        notify_end_of_interrupt(interrupt_number - 32);
+    }
 }
 
 bool keyboard_queue_is_empty(void)
@@ -45,9 +51,13 @@ scancode_t get_scancode(void)
 {
     scancode_t scancode;
 
-    disable_interrupts();
-    circular_queue_pop(&keyboard_queue_data, &scancode);
-    enable_interrupts();
+    if ((read_rflags() & REGISTER_RFLAGS_INTERRUPT) > 0) {
+        disable_interrupts();
+        circular_queue_pop(&keyboard_queue_data, &scancode);
+        enable_interrupts();
+    } else {
+        circular_queue_pop(&keyboard_queue_data, &scancode);
+    }
 
     return scancode;
 }
