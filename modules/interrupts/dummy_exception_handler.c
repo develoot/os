@@ -1,6 +1,6 @@
 #include <kernel/print.h>
-#include <interrupts/control_interrupts.h>
 
+#include "control_interrupts.h"
 #include "dummy_exception_handler.h"
 
 void dummy_exception_handler(const uint8_t exception_number, const uint64_t error_code)

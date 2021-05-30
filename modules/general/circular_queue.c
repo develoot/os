@@ -3,7 +3,7 @@
 #include "circular_queue.h"
 
 void initialize_circular_queue(struct circular_queue_data *const circular_queue_data,
-        uint8_t *const buffer, uint64_t buffer_size, uint64_t entry_size)
+        void *const buffer, uint64_t buffer_size, uint64_t entry_size)
 {
     circular_queue_data->buffer = buffer;
     circular_queue_data->buffer_size = buffer_size;
@@ -15,7 +15,7 @@ void initialize_circular_queue(struct circular_queue_data *const circular_queue_
 }
 
 int circular_queue_push(struct circular_queue_data *const circular_queue_data,
-        const uint8_t *entry)
+        const void *entry)
 {
     uint8_t *const buffer = circular_queue_data->buffer;
     const uint64_t entry_size = circular_queue_data->entry_size;
@@ -35,7 +35,7 @@ int circular_queue_push(struct circular_queue_data *const circular_queue_data,
 }
 
 int circular_queue_pop(struct circular_queue_data *const circular_queue_data,
-        uint8_t *const destination)
+        void *const destination)
 {
     uint8_t *const buffer = circular_queue_data->buffer;
     const uint64_t entry_size = circular_queue_data->entry_size;

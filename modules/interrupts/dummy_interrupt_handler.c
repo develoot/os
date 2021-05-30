@@ -1,7 +1,7 @@
 #include <kernel/print.h>
 
-#include <interrupts/control_interrupts.h>
-#include <interrupts/programmable_interrupt_controller.h>
+#include "control_interrupts.h"
+#include "programmable_interrupt_controller.h"
 
 #include "dummy_interrupt_handler.h"
 
