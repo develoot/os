@@ -102,7 +102,9 @@ global hdd2_routine                         ; Interrupt 47
 global null_interrupt_routine               ; Interrupt 41 ~ 43, 48 ~ 255
 
 extern dummy_exception_handler
+
 extern dummy_interrupt_handler
+extern keyboard_interrupt_handler
 
 section .text
 
@@ -317,7 +319,7 @@ keyboard_routine:
     save_context
 
     mov rdi, 33
-    call dummy_interrupt_handler
+    call keyboard_interrupt_handler
 
     load_context
     iretq
