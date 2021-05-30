@@ -17,14 +17,37 @@ enum port {
     pic_slave1  = 0xA1
 };
 
-uint8_t port_read(enum port port);
-
-void port_write(enum port port, uint8_t byte);
-
 always_inline void port_wait(void)
 {
     // Waste one port I/O cycle by writing to unused port.
     asm __volatile__("outb %%al, $0x80" : : : "al");
+}
+
+always_inline uint8_t port_read(enum port port)
+{
+    uint8_t result;
+
+    asm __volatile__(
+        "mov %1, %%dx \n\t"
+        "in  %%dx, %0 \n\t"
+        : "=r"(result)
+        : "m"(port)
+        : "dx"
+    );
+
+    return result;
+}
+
+always_inline void port_write(enum port port, uint8_t byte)
+{
+    asm __volatile__(
+        "mov  %0,   %%dx    \n\t"
+        "mov  %1,   %%al    \n\t"
+        "out  %%al, %%dx    \n\t"
+        :
+        : "m"(port), "m"(byte)
+        : "dx", "al"
+    );
 }
 
 #endif
