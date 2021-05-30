@@ -8,10 +8,10 @@
 
 #include "keyboard_interrupt_handler.h"
 
-#define KEYBOARD_QUEUE_BUFFER (128)
+#define GLOBAL_KEYBOARD_QUEUE_BUFFER_SIZE (64)
 
-static struct circular_queue_data keyboard_queue_data;
-static scancode_t keyboard_queue_buffer[KEYBOARD_QUEUE_BUFFER];
+static struct circular_queue_data global_keyboard_queue_data;
+static scancode_t global_keyboard_queue_buffer[GLOBAL_KEYBOARD_QUEUE_BUFFER_SIZE];
 
 always_inline bool is_output_buffer_full(void)
 {
@@ -20,14 +20,14 @@ always_inline bool is_output_buffer_full(void)
 
 void initialize_keyboard_queue(void)
 {
-    initialize_circular_queue(&keyboard_queue_data,
-            keyboard_queue_buffer, sizeof(keyboard_queue_buffer), sizeof(scancode_t));
+    initialize_circular_queue(&global_keyboard_queue_data,
+            global_keyboard_queue_buffer, sizeof(global_keyboard_queue_buffer), sizeof(scancode_t));
 }
 
 always_inline void _keyboard_interrupt_handler(const uint8_t interrupt_number)
 {
     const scancode_t scancode = read_port(keyboard0);
-    circular_queue_push(&keyboard_queue_data, &scancode);
+    circular_queue_push(&global_keyboard_queue_data, &scancode);
     notify_end_of_interrupt(interrupt_number - 32);
 }
 
@@ -48,7 +48,7 @@ void keyboard_interrupt_handler(const uint8_t interrupt_number)
 
 bool keyboard_queue_is_empty(void)
 {
-    return keyboard_queue_data.entry_number == 0;
+    return global_keyboard_queue_data.entry_number == 0;
 }
 
 scancode_t get_scancode(void)
@@ -57,10 +57,10 @@ scancode_t get_scancode(void)
 
     if ((read_rflags() & REGISTER_RFLAGS_INTERRUPT) > 0) {
         disable_interrupts();
-        circular_queue_pop(&keyboard_queue_data, &scancode);
+        circular_queue_pop(&global_keyboard_queue_data, &scancode);
         enable_interrupts();
     } else {
-        circular_queue_pop(&keyboard_queue_data, &scancode);
+        circular_queue_pop(&global_keyboard_queue_data, &scancode);
     }
 
     return scancode;
