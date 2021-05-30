@@ -1,5 +1,3 @@
-#include <stdbool.h>
-
 #include <cpu/port.h>
 #include <general/circular_queue.h>
 #include <interrupts/control_interrupts.h>
@@ -38,13 +36,18 @@ void keyboard_interrupt_handler(const uint8_t interrupt_number)
     enable_interrupts();
 }
 
+bool keyboard_queue_is_empty(void)
+{
+    return keyboard_queue_data.entry_number == 0;
+}
+
 scancode_t get_scancode(void)
 {
-    scancode_t result;
+    scancode_t scancode;
 
     disable_interrupts();
-    circular_queue_pop(&keyboard_queue_data, &result);
+    circular_queue_pop(&keyboard_queue_data, &scancode);
     enable_interrupts();
 
-    return result;
+    return scancode;
 }
