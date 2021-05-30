@@ -1,23 +1,15 @@
 #include <cpu/port.h>
 
-#include "scancode_to_ascii.h"
 #include "keyboard_manager.h"
+#include "keyboard_port_status.h"
+#include "scancode_to_ascii.h"
 
-#define KEYBOARD_STATUS_OUTB (0x01) // Output buffer state. (0:Empty, 1:Full)
-#define KEYBOARD_STATUS_INPB (0x02) // Input buffer state.
-#define KEYBOARD_STATUS_SYSF (0x04) // System Flag, (0:Unavailage, 1:Available)
-#define KEYBOARD_STATUS_CD   (0x08) // Indicate type of the last byte sent. (0:Command, 1:Data)
-#define KEYBOARD_STATUS_KEYL (0x10) // Keyboard Lock Status.
-#define KEYBOARD_STATUS_AUXB (0x20) // Output has auxiliary device. (e.g, mouse)
-#define KEYBOARD_STATUS_TIM  (0x40) // General Time-Out.
-#define KEYBOARD_STATUS_PARE (0x80) // Parity Error.
-
-#define KEYBOARD_CMD_ACTIVATE_CONTROLLER (0xAE)
-#define KEYBOARD_CMD_ACTIVATE_KEYBOARD   (0xF4)
-#define KEYBOARD_CMD_ACK                 (0xFA)
-#define KEYBOARD_CMD_CHANGE_LED          (0xED)
-#define KEYBOARD_CMD_READ_CONTROLLER_OUT (0xD0)
-#define KEYBOARD_CMD_SET_OUTPUT_PORT     (0xD1)
+#define KEYBOARD_CMD_ACTIVATE_CONTROLLER  (0xAE)
+#define KEYBOARD_CMD_ACTIVATE_KEYBOARD    (0xF4)
+#define KEYBOARD_CMD_ACK                  (0xFA)
+#define KEYBOARD_CMD_CHANGE_LED           (0xED)
+#define KEYBOARD_CMD_READ_CONTROLLER_OUT  (0xD0)
+#define KEYBOARD_CMD_SET_OUTPUT_PORT      (0xD1)
 
 #define KEYBOARD_SCANCODE_LSHIFT_DOWN     (0x2A)
 #define KEYBOARD_SCANCODE_LSHIFT_UP       (0xAA)
