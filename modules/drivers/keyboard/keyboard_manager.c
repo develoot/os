@@ -1,8 +1,9 @@
 #include <cpu/port.h>
 
-#include "keyboard_manager.h"
-#include "keyboard_port_status.h"
+#include "control_keyboad_port.h"
 #include "scancode_to_ascii.h"
+
+#include "keyboard_manager.h"
 
 #define KEYBOARD_CMD_ACTIVATE_CONTROLLER  (0xAE)
 #define KEYBOARD_CMD_ACTIVATE_KEYBOARD    (0xF4)
@@ -25,16 +26,6 @@
 #define MAX_TRY (0xFFFFFFFF)
 
 static struct keyboard_manager_data global_keyboard_manager_data;
-
-static inline bool is_output_buffer_full(void)
-{
-    return (port_read(keyboard1) & KEYBOARD_STATUS_OUTB) > 0;
-}
-
-static inline bool is_input_buffer_full(void)
-{
-    return (port_read(keyboard1) & KEYBOARD_STATUS_INPB) > 0;
-}
 
 static uint8_t get_scancode(void)
 {

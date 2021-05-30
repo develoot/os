@@ -4,7 +4,7 @@
 #include <interrupts/exception_vector_size.h>
 #include <interrupts/programmable_interrupt_controller.h>
 
-#include "keyboard_port_status.h"
+#include "control_keyboad_port.h"
 
 #include "keyboard_interrupt_handler.h"
 
@@ -12,11 +12,6 @@
 
 static struct circular_queue_data global_keyboard_queue_data;
 static scancode_t global_keyboard_queue_buffer[GLOBAL_KEYBOARD_QUEUE_BUFFER_SIZE];
-
-always_inline bool is_output_buffer_full(void)
-{
-    return (read_port(keyboard1) & KEYBOARD_STATUS_OUTB) > 0;
-}
 
 void initialize_keyboard_queue(void)
 {
