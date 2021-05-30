@@ -1,10 +1,10 @@
 #include <kernel/print.h>
 
-#include "programmable_interrupt_controller.h"
+#include <interrupts/programmable_interrupt_controller.h>
 
-#include "interrupt_handlers.h"
+#include "dummy_interrupt_handler.h"
 
-void dummy_interrupt_handler(uint8_t interrupt_number)
+void dummy_interrupt_handler(const uint8_t interrupt_number)
 {
     print_format("Interrupt %u ", (uint32_t)interrupt_number);
 
