@@ -19,26 +19,15 @@ void initialize_keyboard_queue(void)
             global_keyboard_queue_buffer, sizeof(global_keyboard_queue_buffer), sizeof(scancode_t));
 }
 
-static inline void _keyboard_interrupt_handler(const uint8_t interrupt_number)
-{
-    const scancode_t scancode = port_read(keyboard0);
-    circular_queue_push(&global_keyboard_queue_data, &scancode);
-    notify_end_of_interrupt(interrupt_number - 32);
-}
-
 void keyboard_interrupt_handler(const uint8_t interrupt_number)
 {
     if (is_output_buffer_full() == false) {
         return;
     }
 
-    if ((read_rflags() & REGISTER_RFLAGS_INTERRUPT) > 0) {
-        disable_interrupts();
-        _keyboard_interrupt_handler(interrupt_number);
-        enable_interrupts();
-    } else {
-        _keyboard_interrupt_handler(interrupt_number);
-    }
+    const scancode_t scancode = port_read(keyboard0);
+    circular_queue_push(&global_keyboard_queue_data, &scancode);
+    notify_end_of_interrupt(interrupt_number - 32);
 }
 
 bool keyboard_queue_is_empty(void)
@@ -49,14 +38,6 @@ bool keyboard_queue_is_empty(void)
 scancode_t get_scancode_from_queue(void)
 {
     scancode_t scancode;
-
-    if ((read_rflags() & REGISTER_RFLAGS_INTERRUPT) > 0) {
-        disable_interrupts();
-        circular_queue_pop(&global_keyboard_queue_data, &scancode);
-        enable_interrupts();
-    } else {
-        circular_queue_pop(&global_keyboard_queue_data, &scancode);
-    }
-
+    circular_queue_pop(&global_keyboard_queue_data, &scancode);
     return scancode;
 }
