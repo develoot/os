@@ -8,6 +8,5 @@
 
 void dummy_interrupt_handler(const uint8_t interrupt_number)
 {
-    print_format("Interrupt %u ", (uint32_t)interrupt_number);
     notify_end_of_interrupt(interrupt_number - EXCEPTION_VECTOR_SIZE);
 }

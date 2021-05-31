@@ -27,7 +27,7 @@ void keyboard_interrupt_handler(const uint8_t interrupt_number)
 
     const scancode_t scancode = port_read(keyboard0);
     circular_queue_push(&global_keyboard_queue_data, &scancode);
-    notify_end_of_interrupt(interrupt_number - 32);
+    notify_end_of_interrupt(interrupt_number - EXCEPTION_VECTOR_SIZE);
 }
 
 bool keyboard_queue_is_empty(void)
