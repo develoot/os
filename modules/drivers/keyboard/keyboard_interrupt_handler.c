@@ -19,7 +19,7 @@ void initialize_keyboard_queue(void)
             global_keyboard_queue_buffer, sizeof(global_keyboard_queue_buffer), sizeof(scancode_t));
 }
 
-always_inline void _keyboard_interrupt_handler(const uint8_t interrupt_number)
+static inline void _keyboard_interrupt_handler(const uint8_t interrupt_number)
 {
     const scancode_t scancode = read_port(keyboard0);
     circular_queue_push(&global_keyboard_queue_data, &scancode);
@@ -46,7 +46,7 @@ bool keyboard_queue_is_empty(void)
     return global_keyboard_queue_data.entry_number == 0;
 }
 
-scancode_t get_scancode(void)
+scancode_t get_scancode_from_queue(void)
 {
     scancode_t scancode;
 

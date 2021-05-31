@@ -12,6 +12,6 @@ void keyboard_interrupt_handler(const uint8_t interrupt_number);
 
 bool keyboard_queue_is_empty(void);
 
-scancode_t get_scancode(void);
+scancode_t get_scancode_from_queue(void);
 
 #endif

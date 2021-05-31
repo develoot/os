@@ -1,79 +1,75 @@
 #include <cpu/port.h>
 
 #include "control_keyboad_port.h"
+#include "keyboard_interrupt_handler.h"
 #include "scancode_to_ascii.h"
 
 #include "keyboard_manager.h"
 
-#define KEYBOARD_CMD_ACTIVATE_CONTROLLER  (0xAE)
-#define KEYBOARD_CMD_ACTIVATE_KEYBOARD    (0xF4)
-#define KEYBOARD_CMD_ACK                  (0xFA)
-#define KEYBOARD_CMD_CHANGE_LED           (0xED)
-#define KEYBOARD_CMD_READ_CONTROLLER_OUT  (0xD0)
-#define KEYBOARD_CMD_SET_OUTPUT_PORT      (0xD1)
+#define KEYBOARD_COMMAND_ACTIVATE_CONTROLLER  (0xAE)
+#define KEYBOARD_COMMAND_ACTIVATE_KEYBOARD    (0xF4)
+#define KEYBOARD_COMMAND_ACK                  (0xFA)
+#define KEYBOARD_COMMAND_CHANGE_LED           (0xED)
+#define KEYBOARD_COMMAND_READ_CONTROLLER_OUT  (0xD0)
+#define KEYBOARD_COMMAND_SET_OUTPUT_PORT      (0xD1)
 
-#define KEYBOARD_SCANCODE_LSHIFT_DOWN     (0x2A)
-#define KEYBOARD_SCANCODE_LSHIFT_UP       (0xAA)
-#define KEYBOARD_SCANCODE_RSHIFT_DOWN     (0x36)
-#define KEYBOARD_SCANCODE_RSHIFT_UP       (0xB6)
-#define KEYBOARD_SCANCODE_CAPSLOCK_DOWN   (0x3A)
-#define KEYBOARD_SCANCODE_CAPSLOCK_UP     (0xBA)
-#define KEYBOARD_SCANCODE_NUMLOCK_DOWN    (0x45)
-#define KEYBOARD_SCANCODE_NUMLOCK_UP      (0xC5)
-#define KEYBOARD_SCANCODE_SCROLLLOCK_DOWN (0x46)
-#define KEYBOARD_SCANCODE_SCROLLLOCK_UP   (0xC6)
+#define KEYBOARD_SCANCODE_LSHIFT_DOWN         (0x2A)
+#define KEYBOARD_SCANCODE_LSHIFT_UP           (0xAA)
+#define KEYBOARD_SCANCODE_RSHIFT_DOWN         (0x36)
+#define KEYBOARD_SCANCODE_RSHIFT_UP           (0xB6)
+#define KEYBOARD_SCANCODE_CAPSLOCK_DOWN       (0x3A)
+#define KEYBOARD_SCANCODE_CAPSLOCK_UP         (0xBA)
+#define KEYBOARD_SCANCODE_NUMLOCK_DOWN        (0x45)
+#define KEYBOARD_SCANCODE_NUMLOCK_UP          (0xC5)
+#define KEYBOARD_SCANCODE_SCROLLLOCK_DOWN     (0x46)
+#define KEYBOARD_SCANCODE_SCROLLLOCK_UP       (0xC6)
 
-#define MAX_TRY (0xFFFFFFFF)
+static inline void wait_until_input_buffer_is_empty(void)
+{
+    while (is_input_buffer_full() == true);
+}
+
+static inline void wait_until_keyboard_queue_has_scancode(void)
+{
+    while (keyboard_queue_is_empty() == true);
+}
+
+static inline void write_command_on_port0(uint8_t command)
+{
+    wait_until_input_buffer_is_empty();
+    write_port(keyboard0, command);
+}
+
+static inline scancode_t get_scancode(void)
+{
+    wait_until_keyboard_queue_has_scancode();
+    return get_scancode_from_queue();
+}
 
 static struct keyboard_manager_data global_keyboard_manager_data;
 
-static uint8_t get_scancode(void)
-{
-    uint64_t try = 0;
-
-    while (is_output_buffer_full() == false && try++ < MAX_TRY) {}
-
-    return port_read(keyboard0);
-}
-
 static int change_keyboard_led(bool is_capslock_on, bool is_numlock_on, bool is_scroll_lock_on)
 {
-    uint64_t try = 0;
-    while (is_input_buffer_full() == true && try++ < MAX_TRY) {}
-
-    port_write(keyboard0, KEYBOARD_CMD_CHANGE_LED);
-
-    // Wait until keyboard processes CHANGE_LED command.
-    try = 0;
-    while (is_input_buffer_full() == true && try++ < MAX_TRY) {}
+    write_command_on_port0(KEYBOARD_COMMAND_CHANGE_LED);
 
     for (uint64_t i = 0; i < 100; ++i) {
-        try = 0;
-        while (is_output_buffer_full() == false && try++ < MAX_TRY) {}
-
-        if (port_read(keyboard0) == KEYBOARD_CMD_ACK) {
+        if (get_scancode() == KEYBOARD_COMMAND_ACK) {
             goto SUCCESS_FINDING_ACK;
         }
     }
 
-    return 1;
+    return -1;
 
 SUCCESS_FINDING_ACK:
-    port_write(keyboard0, ((is_capslock_on << 2) | (is_numlock_on << 1) | (is_scroll_lock_on)));
-
-    try = 0;
-    while (is_input_buffer_full() == true && try++ < MAX_TRY) {}
+    write_command_on_port0((is_capslock_on << 2) | (is_numlock_on << 1) | (is_scroll_lock_on));
 
     for (uint64_t i = 0; i < 100; ++i) {
-        try = 0;
-        while (is_output_buffer_full() == false && try++ < MAX_TRY) {}
-
-        if (port_read(keyboard0) == KEYBOARD_CMD_ACK) {
+        if (get_scancode() == KEYBOARD_COMMAND_ACK) {
             return 0;
         }
     }
 
-    return 1;
+    return -1;
 }
 
 static void update_global_keyboard_manager_state(uint8_t scancode)
@@ -92,21 +88,15 @@ static void update_global_keyboard_manager_state(uint8_t scancode)
 
     if (scancode == KEYBOARD_SCANCODE_CAPSLOCK_DOWN) {
         global_keyboard_manager_data.is_capslock_on = !global_keyboard_manager_data.is_capslock_on;
-        goto CHANGE_LED_STATUS;
-    }
-
-    if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
+    } else if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
         global_keyboard_manager_data.is_numlock_on = !global_keyboard_manager_data.is_numlock_on;
-        goto CHANGE_LED_STATUS;
-    }
-
-    if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
+    } else if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
         global_keyboard_manager_data.is_scroll_lock_on =
             !global_keyboard_manager_data.is_scroll_lock_on;
-        goto CHANGE_LED_STATUS;
+    } else {
+        return;
     }
 
-CHANGE_LED_STATUS:
     change_keyboard_led(global_keyboard_manager_data.is_capslock_on,
             global_keyboard_manager_data.is_numlock_on,
             global_keyboard_manager_data.is_scroll_lock_on);
@@ -122,54 +112,33 @@ void initialize_keyboard_manager(void)
 
 int activate_keyboard(void)
 {
-    port_write(keyboard1, KEYBOARD_CMD_ACTIVATE_CONTROLLER);
-
-    // Wait until keyboard processes input so that input buffer is empty.
-    // TODO: This implementation is dumb.
-    uint64_t try = 0;
-    while (is_input_buffer_full() == true && try++ < MAX_TRY) {}
-
-    port_write(keyboard0, KEYBOARD_CMD_ACTIVATE_KEYBOARD);
+    write_port(keyboard1, KEYBOARD_COMMAND_ACTIVATE_CONTROLLER);
+    write_command_on_port0(KEYBOARD_COMMAND_ACTIVATE_KEYBOARD);
 
     // Read 100 times from output buffer to find ACK message.
     for (uint64_t i = 0; i < 100; ++i) {
-        try = 0;
-        while (is_output_buffer_full() == false && try++ < MAX_TRY) {}
-
-        if (port_read(keyboard0) == KEYBOARD_CMD_ACK) {
+        if (get_scancode() == KEYBOARD_COMMAND_ACK) {
             return 0;
         }
     }
 
-    return 1;
+    return -1;
 }
 
 void enable_a20_gate(void)
 {
-    port_write(keyboard1, KEYBOARD_CMD_READ_CONTROLLER_OUT);
-
-    uint64_t try = 0;
-    while (is_output_buffer_full() == false && try++ < MAX_TRY) {}
-
-    uint8_t data = port_read(keyboard0);
+    write_port(keyboard1, KEYBOARD_COMMAND_READ_CONTROLLER_OUT);
+    uint8_t data = get_scancode();
     data |= 0x01; // Set "Enable A20" bit.
 
-    try = 0;
-    while (is_input_buffer_full() == true && try++ < MAX_TRY) {}
-
-    port_write(keyboard1, KEYBOARD_CMD_SET_OUTPUT_PORT);
-    port_write(keyboard0, data);
+    write_port(keyboard1, KEYBOARD_COMMAND_SET_OUTPUT_PORT);
+    write_command_on_port0(data);
 }
 
 void reset_processor(void)
 {
-    uint64_t try = 0;
-    while (is_input_buffer_full() == true && try++ < MAX_TRY);
-
-    port_write(keyboard1, 0xD1);
-    port_write(keyboard0, 0x00);
-
-    while (1) {}
+    write_port(keyboard1, 0xD1);
+    write_command_on_port0(0x00);
 }
 
 int get_keyboard_input(char *out)
@@ -191,7 +160,7 @@ int get_keyboard_input(char *out)
     update_global_keyboard_manager_state(scancode);
 
     if (scancode & 0x80) {
-        return 1;
+        return -1;
     }
 
     *out = convert_scancode_to_ascii(scancode);
