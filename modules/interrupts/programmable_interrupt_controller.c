@@ -5,33 +5,52 @@
 /** For the 8259A interrupt controller. */
 
 /*
- * Initialize Command Word (ICW) definitions.
+ * Command word definitions.
  *
  * Check the data sheet for detailed descriptions.
  */
 #define ICW1       (0x11)
-
 #define ICW2MASTER (0x20)
 #define ICW2SLAVE  (0x28)
-
 #define ICW3MASTER (0x04)
 #define ICW3SLAVE  (0x02)
-
 #define ICW4       (0x01)
-
 #define OCW2       (0x20)
+
+static inline void initialize_master_programmable_interrupt_controller(void)
+{
+    port_write(pic_master0, ICW1);
+    port_wait();
+
+    port_write(pic_master1, ICW2MASTER);
+    port_wait();
+
+    port_write(pic_master1, ICW3MASTER);
+    port_wait();
+
+    port_write(pic_master1, ICW4);
+    port_wait();
+}
+
+static inline void initialize_slave_programmable_interrupt_controller(void)
+{
+    port_write(pic_slave0, ICW1);
+    port_wait();
+
+    port_write(pic_slave1, ICW2SLAVE);
+    port_wait();
+
+    port_write(pic_slave1, ICW3SLAVE);
+    port_wait();
+
+    port_write(pic_slave1, ICW4);
+    port_wait();
+}
 
 void initialize_programmable_interrupt_controller(void)
 {
-    port_write(pic_master0, ICW1);
-    port_write(pic_master1, ICW2MASTER);
-    port_write(pic_master1, ICW3MASTER);
-    port_write(pic_master1, ICW4);
-
-    port_write(pic_slave0, ICW1);
-    port_write(pic_slave1, ICW2SLAVE);
-    port_write(pic_slave1, ICW3SLAVE);
-    port_write(pic_slave1, ICW4);
+    initialize_master_programmable_interrupt_controller();
+    initialize_slave_programmable_interrupt_controller();
 }
 
 void set_interrupt_mask(uint16_t mask)
