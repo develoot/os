@@ -17,9 +17,9 @@ enum port {
     pic_slave1  = 0xA1
 };
 
-uint8_t read_port(enum port port);
+uint8_t port_read(enum port port);
 
-void write_port(enum port port, uint8_t byte);
+void port_write(enum port port, uint8_t byte);
 
 always_inline void port_wait(void)
 {

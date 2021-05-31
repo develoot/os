@@ -1,6 +1,6 @@
 #include "port.h"
 
-uint8_t read_port(enum port port)
+uint8_t port_read(enum port port)
 {
     uint8_t result;
 
@@ -15,7 +15,7 @@ uint8_t read_port(enum port port)
     return result;
 }
 
-void write_port(enum port port, uint8_t byte)
+void port_write(enum port port, uint8_t byte)
 {
     asm __volatile__(
         "mov  %0,   %%dx    \n\t"
