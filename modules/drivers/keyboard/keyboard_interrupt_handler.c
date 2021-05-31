@@ -21,7 +21,7 @@ void initialize_keyboard_queue(void)
 
 static inline void _keyboard_interrupt_handler(const uint8_t interrupt_number)
 {
-    const scancode_t scancode = read_port(keyboard0);
+    const scancode_t scancode = port_read(keyboard0);
     circular_queue_push(&global_keyboard_queue_data, &scancode);
     notify_end_of_interrupt(interrupt_number - 32);
 }

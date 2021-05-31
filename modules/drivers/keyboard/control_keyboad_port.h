@@ -17,12 +17,12 @@
 
 always_inline bool is_output_buffer_full(void)
 {
-    return (read_port(keyboard1) & KEYBOARD_STATUS_OUTB) > 0;
+    return (port_read(keyboard1) & KEYBOARD_STATUS_OUTB) > 0;
 }
 
 always_inline bool is_input_buffer_full(void)
 {
-    return (read_port(keyboard1) & KEYBOARD_STATUS_INPB) > 0;
+    return (port_read(keyboard1) & KEYBOARD_STATUS_INPB) > 0;
 }
 
 #endif

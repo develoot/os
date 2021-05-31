@@ -37,7 +37,7 @@ static inline void wait_until_keyboard_queue_has_scancode(void)
 static inline void write_command_on_port0(uint8_t command)
 {
     wait_until_input_buffer_is_empty();
-    write_port(keyboard0, command);
+    port_write(keyboard0, command);
 }
 
 static inline scancode_t get_scancode(void)
@@ -112,7 +112,7 @@ void initialize_keyboard_manager(void)
 
 int activate_keyboard(void)
 {
-    write_port(keyboard1, KEYBOARD_COMMAND_ACTIVATE_CONTROLLER);
+    port_write(keyboard1, KEYBOARD_COMMAND_ACTIVATE_CONTROLLER);
     write_command_on_port0(KEYBOARD_COMMAND_ACTIVATE_KEYBOARD);
 
     // Read 100 times from output buffer to find ACK message.
@@ -127,17 +127,17 @@ int activate_keyboard(void)
 
 void enable_a20_gate(void)
 {
-    write_port(keyboard1, KEYBOARD_COMMAND_READ_CONTROLLER_OUT);
+    port_write(keyboard1, KEYBOARD_COMMAND_READ_CONTROLLER_OUT);
     uint8_t data = get_scancode();
     data |= 0x01; // Set "Enable A20" bit.
 
-    write_port(keyboard1, KEYBOARD_COMMAND_SET_OUTPUT_PORT);
+    port_write(keyboard1, KEYBOARD_COMMAND_SET_OUTPUT_PORT);
     write_command_on_port0(data);
 }
 
 void reset_processor(void)
 {
-    write_port(keyboard1, 0xD1);
+    port_write(keyboard1, 0xD1);
     write_command_on_port0(0x00);
 }
 
