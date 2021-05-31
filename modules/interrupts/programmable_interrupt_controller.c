@@ -89,8 +89,6 @@
  *
  * Each bit in this command represents whether to ignore interrupt requests on the corresponding
  * pin. If we clear bit 0 then interrupt request on the pin 0 will be ignored.
- *
- * TODO: Define function to set the interrupt mask.
  */
 #define OCW1        (0x00)
 /**
@@ -141,22 +139,26 @@ void initialize_programmable_interrupt_controller(void)
 {
     initialize_master_programmable_interrupt_controller();
     initialize_slave_programmable_interrupt_controller();
+    set_interrupt_mask(0);
 }
 
 void set_interrupt_mask(uint16_t mask)
 {
-    // Check OCW1 command in the 8259A data sheet for detailed description.
     port_write(pic_master1, (uint8_t)mask);
+    port_wait();
     port_write(pic_slave1, (uint8_t)(mask >> 8));
+    port_wait();
 }
 
 void notify_end_of_interrupt(uint8_t interrupt_request_number)
 {
-    // Check OCW2 command in the 8259A data sheet for detailed description.
     port_write(pic_master1, OCW2);
 
-    // You need to notify to the slave if the interrupt number is greater or equal to 8.
-    // Consider the master-slave structure.
+    /*
+     * You need to notify to the slave if the interrupt number is greater or equal to 8.
+     *
+     * Consider the master-slave structure.
+     */
     if (interrupt_request_number >= 8) {
         port_write(pic_slave1, OCW2);
     }
