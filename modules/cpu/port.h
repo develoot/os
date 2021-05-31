@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <general/inline.h>
+
 enum port {
     keyboard0 = 0x60,
     keyboard1 = 0x64,
@@ -18,5 +20,11 @@ enum port {
 uint8_t read_port(enum port port);
 
 void write_port(enum port port, uint8_t byte);
+
+always_inline void port_wait(void)
+{
+    // Waste one port I/O cycle by writing to unused port.
+    asm __volatile__("outb %%al, $0x80" : : : "al");
+}
 
 #endif
