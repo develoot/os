@@ -24,25 +24,25 @@
 #define KEYBOARD_SCANCODE_SCROLLLOCK_DOWN     (0x46)
 #define KEYBOARD_SCANCODE_SCROLLLOCK_UP       (0xC6)
 
-static inline void wait_until_input_buffer_is_empty(void)
+static inline void wait_while_input_buffer_is_full(void)
 {
     while (is_input_buffer_full() == true);
 }
 
-static inline void wait_until_keyboard_queue_has_scancode(void)
+static inline void wait_while_keyboard_queue_is_empty(void)
 {
     while (keyboard_queue_is_empty() == true);
 }
 
 static inline void write_command_on_port0(uint8_t command)
 {
-    wait_until_input_buffer_is_empty();
+    wait_while_input_buffer_is_full();
     port_write(keyboard0, command);
 }
 
 static inline scancode_t get_scancode(void)
 {
-    wait_until_keyboard_queue_has_scancode();
+    wait_while_keyboard_queue_is_empty();
     return get_scancode_from_queue();
 }
 
