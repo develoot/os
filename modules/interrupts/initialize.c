@@ -138,5 +138,7 @@ int initialize_interrupts(void)
 
     initialize_programmable_interrupt_controller();
 
+    asm __volatile__("sti");
+
     return 0;
 }
