@@ -112,6 +112,8 @@ void initialize_keyboard_manager(void)
 
 int activate_keyboard(void)
 {
+    initialize_keyboard_queue();
+
     port_write(keyboard1, KEYBOARD_COMMAND_ACTIVATE_CONTROLLER);
     write_command_on_port0(KEYBOARD_COMMAND_ACTIVATE_KEYBOARD);
 

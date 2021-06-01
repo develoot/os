@@ -1,5 +1,5 @@
 ;--------------------------------------------------------------------------------------------------
-; Interrupt Service Routine (ISR) definitions for each exceptions.
+; Interrupt Service Routine (ISR) definitions for each interrupts.
 ;--------------------------------------------------------------------------------------------------
 
 [bits 64]
