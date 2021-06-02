@@ -19,17 +19,22 @@ static inline void reverse_buffer(char *const buffer, size_t size)
 
 static inline size_t convert_int_to_string(char *const buffer, int32_t value)
 {
-    uint64_t i = 0;
+    uint64_t size = 0;
+    int32_t absolute_value = value < 0 ? value * -1 : value;
 
     do {
-        buffer[i++] = conversion_table[value % 10];
-        value /= 10;
-    } while (value > 0);
+        buffer[size++] = conversion_table[absolute_value % 10];
+        absolute_value /= 10;
+    } while (absolute_value > 0);
 
-    reverse_buffer(buffer, i);
-    buffer[i] = '\0';
+    if (value < 0) {
+        buffer[size++] = '-';
+    }
 
-    return i;
+    reverse_buffer(buffer, size);
+    buffer[size] = '\0';
+
+    return size;
 }
 
 static inline size_t convert_uint_to_string(char *const buffer, uint32_t value)
@@ -49,17 +54,22 @@ static inline size_t convert_uint_to_string(char *const buffer, uint32_t value)
 
 static inline size_t convert_long_to_string(char *const buffer, int64_t value)
 {
-    uint64_t i = 0;
+    uint64_t size = 0;
+    int64_t absolute_value = value < 0 ? value * -1 : value;
 
     do {
-        buffer[i++] = conversion_table[value % 10];
-        value /= 10;
-    } while (value > 0);
+        buffer[size++] = conversion_table[absolute_value % 10];
+        absolute_value /= 10;
+    } while (absolute_value > 0);
 
-    reverse_buffer(buffer, i);
-    buffer[i] = '\0';
+    if (value < 0) {
+        buffer[size++] = '-';
+    }
 
-    return i;
+    reverse_buffer(buffer, size);
+    buffer[size] = '\0';
+
+    return size;
 }
 
 static inline size_t convert_ulong_to_string(char *const buffer, uint64_t value)
@@ -177,7 +187,7 @@ int string_format_va(char *output_buffer, uint64_t output_buffer_size, const cha
             }
             case 'u': {
                 size_t string_size =
-                    convert_ulong_to_string(converted_string_buffer, va_arg(ap, int64_t));
+                    convert_ulong_to_string(converted_string_buffer, va_arg(ap, uint64_t));
                 if (output_buffer_size < output_buffer_index + string_size) {
                     return -1;
                 }
