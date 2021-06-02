@@ -1,6 +1,9 @@
 #include <stdarg.h>
+#include <general/string.h>
 
 #include "print.h"
+
+#define PRINT_FORMAT_BUFFER_SIZE (1024)
 
 static struct console_data global_console_data;
 
@@ -61,136 +64,22 @@ void print_string(char *string)
     }
 }
 
-static char conversion_table[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-
-static void reverse_buffer(char *buffer, uint64_t size)
+int print_format(char *format, ...)
 {
-    char tmp;
-    uint64_t i = 0;
-    uint64_t j = size - 1;
+    char buffer[PRINT_FORMAT_BUFFER_SIZE];
 
-    while (i < j) {
-        tmp = buffer[i];
-        buffer[i++] = buffer[j];
-        buffer[j--] = tmp;
-    }
-}
+    va_list ap;
+    va_start(ap, format);
+    int result = string_format_va(buffer, sizeof(buffer), format, ap);
+    va_end(ap);
 
-static void int_to_string(char *buffer, int value)
-{
-    uint64_t i = 0;
-
-    do {
-        buffer[i++] = conversion_table[value % 10];
-        value /= 10;
-    } while (value > 0);
-
-    reverse_buffer(buffer, i);
-    buffer[i] = '\0';
-}
-
-static void uint_to_string(char *buffer, unsigned int value)
-{
-    uint64_t i = 0;
-
-    do {
-        buffer[i++] = conversion_table[value % 10];
-        value /= 10;
-    } while (value > 0);
-
-    reverse_buffer(buffer, i);
-    buffer[i] = '\0';
-}
-
-static void long_to_string(char *buffer, long value)
-{
-    uint64_t i = 0;
-
-    do {
-        buffer[i++] = conversion_table[value % 10];
-        value /= 10;
-    } while (value > 0);
-
-    reverse_buffer(buffer, i);
-    buffer[i] = '\0';
-}
-
-static void ulong_to_string(char *buffer, unsigned long value)
-{
-    uint64_t i = 0;
-
-    do {
-        buffer[i++] = conversion_table[value % 10];
-        value /= 10;
-    } while (value > 0);
-
-    reverse_buffer(buffer, i);
-    buffer[i] = '\0';
-}
-
-#define PRINT_FORMAT_BUFFER_SIZE (1024)
-
-void print_format(char *format, ...)
-{
-    /**
-     * %c: character, 1 byte.
-     * %s: pointer to string, 8 bytes.
-     * %d: signed integer, 4 bytes.
-     * %u: unsigned integer, 4 bytes.
-     * %ld: signed long, 8 bytes.
-     * %lu: unsigned long, 8 bytes.
-     */
-
-    static char buffer[PRINT_FORMAT_BUFFER_SIZE] = { 0 };
-
-    va_list va;
-    va_start(va, format);
-
-    while (*format != '\0') {
-        if (*format != '%') {
-            print_char(*format);
-            ++format;
-            continue;
-        }
-
-        ++format;
-        switch (*format) {
-        case 'c':
-            print_char(va_arg(va, int));
-            ++format;
-            break;
-        case 's':
-            print_string(va_arg(va, char *));
-            ++format;
-            break;
-        case 'd':
-            int_to_string(buffer, va_arg(va, int));
-            print_string(buffer);
-            ++format;
-            break;
-        case 'u':
-            uint_to_string(buffer, va_arg(va, unsigned int));
-            print_string(buffer);
-            ++format;
-            break;
-        case 'l':
-            ++format;
-            switch (*format) {
-            case 'd':
-                long_to_string(buffer, va_arg(va, long));
-                print_string(buffer);
-                ++format;
-                break;
-            case 'u':
-                ulong_to_string(buffer, va_arg(va, unsigned long));
-                print_string(buffer);
-                ++format;
-                break;
-            }
-        }
+    if (result != 0) {
+        return -1;
     }
 
-    va_end(va);
+    print_string(buffer);
+
+    return 0;
 }
 
 void print_clear(void)

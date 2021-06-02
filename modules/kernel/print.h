@@ -39,7 +39,7 @@ struct console_data {
 int print_initialize(struct graphic_frame_buffer_data frame_buffer_data, struct psf1_data psf1_data);
 void print_char(char character);
 void print_string(char *string);
-void print_format(char *format, ...);
+int print_format(char *format, ...);
 void print_clear(void);
 
 #endif
