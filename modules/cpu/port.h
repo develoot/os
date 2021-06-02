@@ -2,7 +2,6 @@
 #define _CPU_PORT_H
 
 #include <stdint.h>
-
 #include <general/inline.h>
 
 enum port {

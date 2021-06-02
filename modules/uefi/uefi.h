@@ -2,14 +2,21 @@
 #define _UEFI_H
 
 #include <efi.h>
+#include <stddef.h>
+#include <general/address.h>
+#include <general/inline.h>
 
-#define NEXT_DESCRIPTOR(ptr, size) \
-    ((EFI_MEMORY_DESCRIPTOR *)((uint8_t *)ptr + size))
+always_inline EFI_MEMORY_DESCRIPTOR *uefi_memory_descriptor_next(
+        EFI_MEMORY_DESCRIPTOR *descriptor,
+        size_t size)
+{
+    return (EFI_MEMORY_DESCRIPTOR *)((address_t)descriptor + size);
+}
 
-#define FOR_EACH_DESCRIPTOR(name, buffer, buffer_size, descriptor_size) \
-    for (EFI_MEMORY_DESCRIPTOR *name = buffer; \
-            (uint8_t *)name < (uint8_t *)buffer + buffer_size; \
-            name = NEXT_DESCRIPTOR(name, descriptor_size))
+#define uefi_memory_descriptor_for_each(Name, Buffer, BufferSize, DescriptorSize)   \
+    for (EFI_MEMORY_DESCRIPTOR *Name = Buffer;                                      \
+            (address_t)Name < (address_t)Buffer + BufferSize;                       \
+            Name = uefi_memory_descriptor_next(Name, DescriptorSize))
 
 struct uefi_memory_map_data {
     EFI_MEMORY_DESCRIPTOR *memory_descriptor_buffer;

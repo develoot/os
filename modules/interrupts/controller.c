@@ -1,6 +1,6 @@
 #include <cpu/port.h>
 
-#include "programmable_interrupt_controller.h"
+#include "controller.h"
 
 /**
  * Control functions and data definitions for the 8259A interrupt controller.
@@ -135,14 +135,14 @@ static inline void initialize_slave_programmable_interrupt_controller(void)
     port_wait();
 }
 
-void initialize_programmable_interrupt_controller(void)
+void interrupt_controller_initialize(void)
 {
     initialize_master_programmable_interrupt_controller();
     initialize_slave_programmable_interrupt_controller();
-    set_interrupt_mask(0);
+    interrupt_controller_set_mask(0);
 }
 
-void set_interrupt_mask(uint16_t mask)
+void interrupt_controller_set_mask(uint16_t mask)
 {
     port_write(pic_master1, (uint8_t)mask);
     port_wait();
@@ -150,7 +150,7 @@ void set_interrupt_mask(uint16_t mask)
     port_wait();
 }
 
-void notify_end_of_interrupt(uint8_t interrupt_request_number)
+void interrupt_controller_notify_end(uint8_t interrupt_request_number)
 {
     port_write(pic_master0, OCW2);
 

@@ -89,14 +89,14 @@ static inline size_t copy_string_to_buffer(char *const buffer, const char *const
     return i;
 }
 
-static inline size_t string_length(const char *const string)
+size_t string_length(const char *const string)
 {
     size_t i;
     for (i = 0; string[i] != '\0'; ++i);
     return i;
 }
 
-int format_string(char *output_buffer, size_t output_buffer_size, const char *format, ...)
+int string_format(char *output_buffer, size_t output_buffer_size, const char *format, ...)
 {
     char conversion_buffer[FORMAT_STRING_CONVERSION_BUFFER_SIZE];
     const char *format_cursor = &format[0];

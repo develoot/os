@@ -1,8 +1,7 @@
-#ifndef _DRIVERS_KEYBOARD_CONTROL_KEYBOARD_PORT_H
-#define _DRIVERS_KEYBOARD_CONTROL_KEYBOARD_PORT_H
+#ifndef _DRIVERS_KEYBOARD_PORT_H
+#define _DRIVERS_KEYBOARD_PORT_H
 
 #include <stdbool.h>
-
 #include <cpu/port.h>
 #include <general/inline.h>
 

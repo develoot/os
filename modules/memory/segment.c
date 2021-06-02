@@ -1,16 +1,14 @@
 #include <stddef.h>
-
-#include <asm/memory/load_global_descriptor_table.h>
+#include <asm/memory/segment_load_table.h>
 #include <debug/assert.h>
 #include <general/address.h>
-#include <memory/page_frame_allocator.h>
+#include <memory/frame_allocator.h>
 
 #include "global_descriptor_table.h"
 #include "task_state_segment.h"
+#include "segment.h"
 
-#include "initialize.h"
-
-#define APPLICATION_SEGMENT_DESCRIPTOR(Limit, Address, Attribute) { \
+#define application_segment_descriptor(Limit, Address, Attribute) { \
     .limit     = (Limit),                                           \
     .address0  = (Address),                                         \
     .address1  = ((Address) >> 16) & 0xFF,                          \
@@ -35,7 +33,7 @@ static struct task_state_segment global_task_state_segment;
  */
 __attribute__((aligned(0x08)))
 static struct global_descriptor_table global_descriptor_table = {
-    .null = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00),
+    .null = application_segment_descriptor(0, 0, 0x00),
     /*
      * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
      * SEGMENT_ATTRIBUTE_DB = 0         // Have to be 0 when L is set.
@@ -47,7 +45,7 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b1010  // Executable and readable, but not conforming.
      */
-    .kernel_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xAF9A),
+    .kernel_code = application_segment_descriptor(0, 0, 0xAF9A),
     /*
      * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
      * SEGMENT_ATTRIBUTE_DB = 1         // This flag is ignored in data segment descriptor.
@@ -59,8 +57,8 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b0010  // Readable and writable.
      */
-    .kernel_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xCF92),
-    .user_null = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0x00),
+    .kernel_data = application_segment_descriptor(0, 0, 0xCF92),
+    .user_null = application_segment_descriptor(0, 0, 0x00),
     /*
      * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
      * SEGMENT_ATTRIBUTE_DB = 0         // Have to be 0 when L is set.
@@ -72,7 +70,7 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b1010  // Executable and readable, but not conforming.
      */
-    .user_code = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xAFFA),
+    .user_code = application_segment_descriptor(0, 0, 0xAFFA),
     /*
      * SEGMENT_ATTRIBUTE_G = 1          // Interpret the segment limit field in 4KB units.
      * SEGMENT_ATTRIBUTE_DB = 1         // This flag is ignored in data segment descriptor.
@@ -84,7 +82,7 @@ static struct global_descriptor_table global_descriptor_table = {
      * SEGMENT_ATTRIBUTE_S = 1          // This is application segment.
      * SEGMENT_ATTRIBUTE_TYPE = 0b0010  // Readable and writable.
      */
-    .user_data = APPLICATION_SEGMENT_DESCRIPTOR(0, 0, 0xCFF2)
+    .user_data = application_segment_descriptor(0, 0, 0xCFF2)
 };
 
 static inline void initialize_task_state_segment(void)
@@ -99,7 +97,7 @@ static inline void initialize_task_state_segment(void)
     global_task_state_segment.rsp[1] = 0x00;
     global_task_state_segment.rsp[2] = 0x00;
 
-    const page_frame_t interrupt_stack = request_page_frames(512);
+    const frame_t interrupt_stack = frame_allcoator_request(512);
 
     global_task_state_segment.interrupt_stack_table[0] = (uint64_t)interrupt_stack;
     global_task_state_segment.interrupt_stack_table[1] = (uint64_t)interrupt_stack;
@@ -137,7 +135,7 @@ static inline void register_task_state_segment(void)
     global_descriptor_table.task_state.reserved  = 0;
 }
 
-void initialize_segmentation(void)
+void segment_initialize(void)
 {
     assert(sizeof(struct global_descriptor_table) % 8 == 0, "GDT is not packed");
     assert(sizeof(struct global_descriptor_table_register_entry) == 10, "GDTR entry is not packed");
@@ -152,7 +150,7 @@ void initialize_segmentation(void)
         .table_address = (uint64_t)&global_descriptor_table
     };
 
-    load_global_descriptor_table(&register_entry);
+    segment_load_table(&register_entry);
 
     const uint16_t task_state_segment_offset = offsetof(struct global_descriptor_table, task_state);
 

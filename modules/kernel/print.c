@@ -1,9 +1,10 @@
 #include <stdarg.h>
+
 #include "print.h"
 
 static struct console_data global_console_data;
 
-int initialize_print(struct graphic_frame_buffer_data frame_buffer_data, struct psf1_data psf1_data)
+int print_initialize(struct graphic_frame_buffer_data frame_buffer_data, struct psf1_data psf1_data)
 {
     global_console_data.frame_buffer_data = frame_buffer_data;
     global_console_data.psf1_data = psf1_data;
@@ -32,7 +33,7 @@ void print_char(char character)
     for (uint64_t y_offset = 0; y_offset < 16; ++y_offset) {
         for (uint64_t x_offset = 0; x_offset < 8; ++x_offset) {
             if (glyph[y_offset] & row_masks[x_offset]) { /* If nth bit of this row is 1. */
-                draw_block(frame_buffer_data,
+                screen_draw_block(frame_buffer_data,
                         global_console_data.cursor.x + (x_offset * block_size),
                         global_console_data.cursor.y + (y_offset * block_size),
                         block_size, global_console_data.pixel_color);
@@ -199,7 +200,7 @@ void print_clear(void)
 
     for (uint64_t i = 0; i < frame_buffer_data->height; ++i) {
         for (uint64_t j = 0; j < frame_buffer_data->width; ++j) {
-            draw_block(frame_buffer_data, j, i, 1, black);
+            screen_draw_block(frame_buffer_data, j, i, 1, black);
         }
     }
 }

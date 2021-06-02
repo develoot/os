@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
 #include <general/address.h>
 #include <general/inline.h>
 
@@ -19,7 +18,7 @@ struct linked_list_node {
     struct linked_list_node *previous;
 };
 
-always_inline void initialize_linked_list(struct linked_list_node *const head)
+always_inline void linked_list_initialize(struct linked_list_node *const head)
 {
     head->next = head;
     head->previous = head;

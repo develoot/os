@@ -1,6 +1,0 @@
-#ifndef _MEMORY_PAGE_FRAME_SIZE_H
-#define _MEMORY_PAGE_FRAME_SIZE_H
-
-#define PAGE_FRAME_SIZE (0x1000)
-
-#endif

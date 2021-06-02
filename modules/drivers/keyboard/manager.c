@@ -1,10 +1,9 @@
 #include <cpu/port.h>
 
-#include "control_keyboad_port.h"
-#include "keyboard_interrupt_handler.h"
+#include "port.h"
+#include "interrupt_handler.h"
 #include "scancode_to_ascii.h"
-
-#include "keyboard_manager.h"
+#include "manager.h"
 
 #define KEYBOARD_COMMAND_ACTIVATE_CONTROLLER  (0xAE)
 #define KEYBOARD_COMMAND_ACTIVATE_KEYBOARD    (0xF4)
@@ -29,9 +28,9 @@ static inline void wait_while_input_buffer_is_full(void)
     while (is_input_buffer_full() == true);
 }
 
-static inline void wait_while_keyboard_queue_is_empty(void)
+static inline void wait_while_keyboard_interrupt_handler_queue_is_empty(void)
 {
-    while (keyboard_queue_is_empty() == true);
+    while (keyboard_interrupt_handler_queue_is_empty() == true);
 }
 
 static inline void write_command_on_port0(uint8_t command)
@@ -42,8 +41,8 @@ static inline void write_command_on_port0(uint8_t command)
 
 static inline scancode_t get_scancode(void)
 {
-    wait_while_keyboard_queue_is_empty();
-    return get_scancode_from_queue();
+    wait_while_keyboard_interrupt_handler_queue_is_empty();
+    return keyboard_interrupt_handler_get_scancode();
 }
 
 static struct keyboard_manager_data global_keyboard_manager_data;
@@ -102,7 +101,7 @@ static void update_global_keyboard_manager_state(uint8_t scancode)
             global_keyboard_manager_data.is_scroll_lock_on);
 }
 
-void initialize_keyboard_manager(void)
+void keyboard_manager_initialize(void)
 {
     global_keyboard_manager_data.is_capslock_on    = false;
     global_keyboard_manager_data.is_numlock_on     = false;
@@ -110,9 +109,9 @@ void initialize_keyboard_manager(void)
     global_keyboard_manager_data.is_shift_down     = false;
 }
 
-int activate_keyboard(void)
+int keyboard_manager_activate_keyboard(void)
 {
-    initialize_keyboard_queue();
+    keyboard_interrupt_handler_initialize();
 
     port_write(keyboard1, KEYBOARD_COMMAND_ACTIVATE_CONTROLLER);
     write_command_on_port0(KEYBOARD_COMMAND_ACTIVATE_KEYBOARD);
@@ -127,7 +126,7 @@ int activate_keyboard(void)
     return -1;
 }
 
-void enable_a20_gate(void)
+void keyboard_manager_enable_a20(void)
 {
     port_write(keyboard1, KEYBOARD_COMMAND_READ_CONTROLLER_OUT);
     uint8_t data = get_scancode();
@@ -137,13 +136,13 @@ void enable_a20_gate(void)
     write_command_on_port0(data);
 }
 
-void reset_processor(void)
+void keyboard_manager_reset_processor(void)
 {
     port_write(keyboard1, 0xD1);
     write_command_on_port0(0x00);
 }
 
-int get_keyboard_input(char *out)
+int keyboard_manager_get_input(char *out)
 {
     uint8_t scancode = get_scancode();
 
@@ -165,27 +164,27 @@ int get_keyboard_input(char *out)
         return -1;
     }
 
-    *out = convert_scancode_to_ascii(scancode);
+    *out = scancode_to_ascii_convert(scancode);
 
     return 0;
 }
 
-bool is_capslock_on(void)
+bool keyboard_manager_is_capslock_on(void)
 {
     return global_keyboard_manager_data.is_capslock_on;
 }
 
-bool is_numlock_on(void)
+bool keyboard_manager_is_numlock_on(void)
 {
     return global_keyboard_manager_data.is_numlock_on;
 }
 
-bool is_scroll_lock_on(void)
+bool keyboard_manager_is_scroll_lock_on(void)
 {
     return global_keyboard_manager_data.is_scroll_lock_on;
 }
 
-bool is_shift_down(void)
+bool keyboard_manager_is_shift_down(void)
 {
     return global_keyboard_manager_data.is_shift_down;
 }

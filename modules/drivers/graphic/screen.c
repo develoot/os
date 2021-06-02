@@ -1,6 +1,6 @@
 #include "screen.h"
 
-static uint32_t get_pixel(EFI_GRAPHICS_PIXEL_FORMAT pixel_format, struct pixel_color color)
+static inline uint32_t get_pixel(EFI_GRAPHICS_PIXEL_FORMAT pixel_format, struct pixel_color color)
 {
     switch (pixel_format) {
     case PixelRedGreenBlueReserved8BitPerColor:
@@ -12,7 +12,7 @@ static uint32_t get_pixel(EFI_GRAPHICS_PIXEL_FORMAT pixel_format, struct pixel_c
     }
 }
 
-static void draw_pixel(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
+static inline void draw_pixel(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
         struct pixel_color color)
 {
     if (x > buffer_data->width || y > buffer_data->height) {
@@ -25,7 +25,7 @@ static void draw_pixel(struct graphic_frame_buffer_data *buffer_data, uint64_t x
         = get_pixel(buffer_data->pixel_format, color);
 }
 
-void draw_block(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
+void screen_draw_block(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
         uint64_t block_size, struct pixel_color color)
 {
     for (uint64_t i = 0; i < block_size; ++i) {

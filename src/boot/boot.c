@@ -1,7 +1,6 @@
 #include <efi.h>
 #include <efilib.h>
 #include <elf.h>
-
 #include <kernel/boot_data.h>
 #include <uefi/uefi.h>
 
@@ -43,14 +42,14 @@ static void print_memory_map(const EFI_MEMORY_DESCRIPTOR *const descriptor_buffe
         "EfiPalCode"
     };
 
-    uint64_t total_page_frame_number = 0;
+    uint64_t total_frame_number = 0;
 
-    FOR_EACH_DESCRIPTOR(d, descriptor_buffer, descriptor_buffer_size, descriptor_size) {
+    uefi_memory_descriptor_for_each(d, descriptor_buffer, descriptor_buffer_size, descriptor_size) {
         Print(L"%a, %u KB\n", memory_types[d->Type], d->NumberOfPages * 4);
-        total_page_frame_number += d->NumberOfPages;
+        total_frame_number += d->NumberOfPages;
     }
 
-    Print(L"Total: %u KB\n", total_page_frame_number);
+    Print(L"Total: %u KB\n", total_frame_number);
 }
 #endif
 
@@ -103,7 +102,7 @@ EFI_STATUS open_file(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_sy
 }
 
 EFI_STATUS get_graphic_frame_buffer_data(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output,
-        struct kernel_boot_data *const boot_data)
+        struct boot_data *const boot_data)
 {
     /* Unsupported pixel format. */
     if (graphics_output->Mode->Info->PixelFormat != PixelRedGreenBlueReserved8BitPerColor
@@ -128,7 +127,7 @@ EFI_STATUS get_graphic_frame_buffer_data(const EFI_GRAPHICS_OUTPUT_PROTOCOL *con
 }
 
 EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
-        struct kernel_boot_data *const boot_data, EFI_FILE_PROTOCOL *const root,
+        struct boot_data *const boot_data, EFI_FILE_PROTOCOL *const root,
         const CHAR16 *const path)
 {
     EFI_STATUS status;
@@ -172,7 +171,7 @@ EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_fi
     return EFI_SUCCESS;
 }
 
-EFI_STATUS load_kernel_elf(struct kernel_boot_data *const boot_data,
+EFI_STATUS load_kernel_elf(struct boot_data *const boot_data,
         const EFI_FILE_PROTOCOL *const kernel_file)
 {
     EFI_STATUS status;
@@ -187,8 +186,7 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_data *const boot_data,
             || elf_header.e_ident[EI_VERSION] != EV_CURRENT
             || elf_header.e_machine           != EM_X86_64
             || elf_header.e_version           != EV_CURRENT
-            || (elf_header.e_type != ET_EXEC && elf_header.e_type != ET_DYN))
-    {
+            || (elf_header.e_type != ET_EXEC && elf_header.e_type != ET_DYN)) {
         Print(L"Kernel ELF header is invalid.\n");
         return EFI_ABORTED;
     }
@@ -311,7 +309,7 @@ EFI_STATUS load_kernel_elf(struct kernel_boot_data *const boot_data,
     return 0;
 }
 
-EFI_STATUS get_memory_map_data(struct kernel_boot_data *const boot_data,
+EFI_STATUS get_memory_map_data(struct boot_data *const boot_data,
         EFI_MEMORY_DESCRIPTOR *const descriptor_buffer)
 {
     EFI_STATUS status;
@@ -338,7 +336,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     EFI_STATUS status;
     InitializeLib(image_handle, system_table);
 
-    struct kernel_boot_data boot_data;
+    struct boot_data boot_data;
 
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *simple_file_system = NULL;
     status = uefi_call_wrapper(BS->LocateProtocol, 3,
@@ -424,8 +422,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 
     Print(L"Start kernel.\n");
 
-    int (*start_kernel)(struct kernel_boot_data) =
-        (__attribute__((sysv_abi)) int (*)(const struct kernel_boot_data))
+    int (*start_kernel)(struct boot_data) =
+        (__attribute__((sysv_abi)) int (*)(const struct boot_data))
             boot_data.kernel_start_address;
 
     Print(L"%d\n", start_kernel(boot_data));

@@ -1,16 +1,16 @@
 ;--------------------------------------------------------------------------------------------------
-; Load the given global descriptor register entry into the GDTR register.
+; Load given global descriptor register entry into the GDTR register.
 ;
 ; This function also changes contents of segment registers according to the loaded GDT entry.
 ;--------------------------------------------------------------------------------------------------
 
 [bits 64]
 
-global load_global_descriptor_table
+global segment_load_table
 
 section .text
 
-load_global_descriptor_table:
+segment_load_table:
 	lgdt [rdi]
 
 	mov ax, 0x10 ; Kernel data segment selector.

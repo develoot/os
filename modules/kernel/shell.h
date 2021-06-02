@@ -1,6 +1,6 @@
 #ifndef _KERNEL_SHELL_H
 #define _KERNEL_SHELL_H
 
-void start_shell(void);
+void shell_start(void);
 
 #endif

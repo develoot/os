@@ -2,7 +2,6 @@
 #define _GENERAL_MEMORY_UTILS_H
 
 #include <stdint.h>
-
 #include <general/inline.h>
 
 always_inline void memory_copy(uint8_t *const destination, const uint8_t *source, uint64_t size)

@@ -1,5 +1,5 @@
-#ifndef _MEMORY_SEGMENTATION_GLOBAL_DESCRIPTOR_TABLE_H
-#define _MEMORY_SEGMENTATION_GLOBAL_DESCRIPTOR_TABLE_H
+#ifndef MEMORY_SEGMENT_GLOBAL_DESCRIPTOR_TABLE_H
+#define MEMORY_SEGMENT_GLOBAL_DESCRIPTOR_TABLE_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -35,7 +35,7 @@ struct global_descriptor_table_register_entry {
  * Segment limit is calculated combining `limit` and `SEGMENT_ATTRIBUTE_LIMIT` field of the
  * `attribute` member.
  *
- * Most fileds of descriptors are set to 0 as the segmentation is mostly deactivated in IA-32e mode.
+ * Most fileds of descriptors are set to 0 as the segment is mostly deactivated in IA-32e mode.
  *
  * Note that system segment descriptors have different structure.
  */
@@ -156,25 +156,14 @@ struct global_descriptor_table {
     struct application_segment_descriptor user_null;
     struct application_segment_descriptor user_code;
     struct application_segment_descriptor user_data;
-    struct task_state_segment_descriptor task_state;
-} __attribute__((packed, aligned(0x1000)));
+    struct task_state_segment_descriptor  task_state;
+} __attribute__((packed, aligned(0x08)));
 
-#define GLOBAL_DESCRIPTOR_TABLE_NULL_SEGMENT_INDEX \
-    (offsetof(struct global_descriptor_table, null) / sizeof(struct application_segment_descriptor))
-
-#define GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX \
-    (offsetof(struct global_descriptor_table, kernel_code) / sizeof(struct application_segment_descriptor))
-
-#define GLOBAL_DESCRIPTOR_TABLE_KERNEL_DATA_SEGMENT_INDEX \
-    (offsetof(struct global_descriptor_table, kernel_data) / sizeof(struct application_segment_descriptor))
-
-#define GLOBAL_DESCRIPTOR_TABLE_USER_NULL_SEGMENT_INDEX \
-    (offsetof(struct global_descriptor_table, user_null) / sizeof(struct application_segment_descriptor))
-
-#define GLOBAL_DESCRIPTOR_TABLE_USER_CODE_SEGMENT_INDEX \
-    (offsetof(struct global_descriptor_table, user_code) / sizeof(struct application_segment_descriptor))
-
-#define GLOBAL_DESCRIPTOR_TABLE_USER_DATA_SEGMENT_INDEX \
-    (offsetof(struct global_descriptor_table, user_data) / sizeof(struct application_segment_descriptor))
+#define GLOBAL_DESCRIPTOR_TABLE_NULL_INDEX        (0)
+#define GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX (1)
+#define GLOBAL_DESCRIPTOR_TABLE_KERNEL_DATA_INDEX (2)
+#define GLOBAL_DESCRIPTOR_TABLE_USER_NULL_INDEX   (3)
+#define GLOBAL_DESCRIPTOR_TABLE_USER_CODE_INDEX   (4)
+#define GLOBAL_DESCRIPTOR_TABLE_USER_DATA_INDEX   (5)
 
 #endif

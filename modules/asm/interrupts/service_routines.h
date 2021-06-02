@@ -1,5 +1,5 @@
-#ifndef _ASM_INTERRUPTS_INTERRUPT_SERVICE_ROUTINES_H
-#define _ASM_INTERRUPTS_INTERRUPT_SERVICE_ROUTINES_H
+#ifndef _ASM_INTERRUPTS_SERVICE_ROUTINES_H
+#define _ASM_INTERRUPTS_SERVICE_ROUTINES_H
 
 /*
  * Note that these prototypes are meant to be used for linking.

@@ -41,6 +41,6 @@
 #define KEY_F12                 (0x9F)
 #define KEY_PAUSE               (0xA0)
 
-char convert_scancode_to_ascii(uint8_t scancode);
+char scancode_to_ascii_convert(uint8_t scancode);
 
 #endif

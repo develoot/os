@@ -1,15 +1,13 @@
 #include <stdbool.h>
-
 #include <debug/assert.h>
 
-#include "page_frame_allocator.h"
+#include "frame_allocator.h"
 #include "page_structure_entry.h"
-
-#include "paging.h"
+#include "page.h"
 
 static inline bool page_not_present(uint64_t *const table, const uint16_t offset)
 {
-    return !(table[offset] & GENERAL_PAGE_STRUCTURE_ENTRY_PRESENT);
+    return !(table[offset] & PAGE_STRUCTURE_ENTRY_PRESENT);
 }
 
 static inline uint16_t get_level4_table_offset(address_t virtual_address)
@@ -35,31 +33,31 @@ static inline uint16_t get_level1_table_offset(address_t virtual_address)
 static inline void set_next_page_structure(uint64_t *const page_table_entry,
         const uint64_t *const next_page_structure)
 {
-    *page_table_entry &= ~GENERAL_PAGE_STRUCTURE_ENTRY_BASE_ADDRESS;
+    *page_table_entry &= ~PAGE_STRUCTURE_ENTRY_BASE_ADDRESS;
     *page_table_entry |= (uint64_t)next_page_structure;
-    *page_table_entry |= GENERAL_PAGE_STRUCTURE_ENTRY_PRESENT;
+    *page_table_entry |= PAGE_STRUCTURE_ENTRY_PRESENT;
 }
 
 static inline uint64_t *get_next_page_structure(uint64_t page_table_entry)
 {
-    return (uint64_t *)(page_table_entry & GENERAL_PAGE_STRUCTURE_ENTRY_BASE_ADDRESS);
+    return (uint64_t *)(page_table_entry & PAGE_STRUCTURE_ENTRY_BASE_ADDRESS);
 }
 
 static uint64_t *request_new_page_structure(void)
 {
-    uint64_t *const new_page_structure = (uint64_t *)request_page_frames(1);
-    if (new_page_structure == PAGE_FRAME_NULL) {
+    uint64_t *const new_page_structure = (uint64_t *)frame_allcoator_request(1);
+    if (new_page_structure == MEMORY_FRAME_NULL) {
         return PAGE_NULL;
     }
 
     const address_t new_page_structure_address = (address_t)new_page_structure;
-    assert(new_page_structure_address % PAGE_FRAME_SIZE == 0, "New page structure is not aligned");
-    assert(new_page_structure_address < GENERAL_PAGE_STRUCTURE_ENTRY_BASE_ADDRESS,
+    assert(new_page_structure_address % MEMORY_FRAME_SIZE == 0, "New page structure is not aligned");
+    assert(new_page_structure_address < PAGE_STRUCTURE_ENTRY_BASE_ADDRESS,
             "New page structure address out of address space");
 
     for (uint64_t i = 0; i < 512; ++i) {
         new_page_structure[i] = 0;
-        new_page_structure[i] |= GENERAL_PAGE_STRUCTURE_ENTRY_DEFAULT_FLAG;
+        new_page_structure[i] |= PAGE_STRUCTURE_ENTRY_DEFAULT;
     }
 
     return new_page_structure;
@@ -77,18 +75,18 @@ static int set_new_page_structure(uint64_t *page_table_entry)
     return 0;
 }
 
-int initialize_kernel_page_map(struct paging_data *const paging_data)
+int page_initialize_kernel_map(struct page_data *const page_data)
 {
-    if (paging_data->level4_table == PAGE_NULL) {
+    if (page_data->level4_table == PAGE_NULL) {
         void *const new_page_structure = request_new_page_structure();
         if (new_page_structure == PAGE_NULL) {
             return 1;
         }
-        paging_data->level4_table = new_page_structure;
+        page_data->level4_table = new_page_structure;
     }
 
-    for (uint64_t i = 0; i < get_total_page_frame_number(); ++i) {
-        int result = map_page(paging_data, i * PAGE_SIZE, i * PAGE_SIZE);
+    for (uint64_t i = 0; i < frame_allocator_get_total_frame_number(); ++i) {
+        int result = page_map(page_data, i * PAGE_SIZE, i * PAGE_SIZE);
         if (result != 0) {
             return 1;
         }
@@ -97,7 +95,7 @@ int initialize_kernel_page_map(struct paging_data *const paging_data)
     return 0;
 }
 
-int map_page(struct paging_data *const paging_data,
+int page_map(struct page_data *const page_data,
         address_t virtual_page_address, address_t physical_page_address)
 {
     assert(virtual_page_address % PAGE_SIZE == 0, "Not aligned virtual address");
@@ -105,7 +103,7 @@ int map_page(struct paging_data *const paging_data,
 
     int result = 0;
 
-    uint64_t *const level4_table = paging_data->level4_table;
+    uint64_t *const level4_table = page_data->level4_table;
     uint64_t level4_table_offset = get_level4_table_offset(virtual_page_address);
     if (page_not_present(level4_table, level4_table_offset)) {
         result = set_new_page_structure(&level4_table[level4_table_offset]);
@@ -141,9 +139,9 @@ int map_page(struct paging_data *const paging_data,
     return 0;
 }
 
-void change_current_page_map(struct paging_data paging_data)
+void page_load(struct page_data page_data)
 {
-    address_t level4_table_address = (address_t)paging_data.level4_table;
+    address_t level4_table_address = (address_t)page_data.level4_table;
     assert(level4_table_address % PAGE_SIZE == 0, "Not aligned PML4");
     asm __volatile__ ("mov %0, %%cr3\n\t" : : "r"(level4_table_address));
 }

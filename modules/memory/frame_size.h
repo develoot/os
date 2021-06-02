@@ -1,0 +1,6 @@
+#ifndef _MEMORY_FRAME_SIZE_H
+#define _MEMORY_FRAME_SIZE_H
+
+#define MEMORY_FRAME_SIZE (0x1000)
+
+#endif

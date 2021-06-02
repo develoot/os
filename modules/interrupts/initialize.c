@@ -1,12 +1,11 @@
+#include <asm/interrupts/service_routines.h>
 #include <debug/assert.h>
 #include <general/address.h>
-#include <memory/segmentation/global_descriptor_table.h>
-#include <memory/segmentation/segment_selector.h>
+#include <memory/global_descriptor_table.h>
+#include <memory/segment_selector.h>
 
-#include "interrupt_descriptor_table.h"
-#include "programmable_interrupt_controller.h"
-#include <asm/interrupts/interrupt_service_routines.h>
-
+#include "descriptor_table.h"
+#include "controller.h"
 #include "initialize.h"
 
 #define INTERRUPT_TABLE_SIZE (256)
@@ -29,11 +28,11 @@ static void register_exception_routine(struct interrupt_gate_descriptor *descrip
         void (*handler))
 {
     register_interrupt_routine(descriptor, handler,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 }
 
-int initialize_interrupts(void)
+int interrupts_initialize(void)
 {
     assert(sizeof(struct interrupt_gate_descriptor) != 128, "Size of IDT descriptor is invalid");
 
@@ -66,66 +65,66 @@ int initialize_interrupts(void)
     }
 
     register_interrupt_routine(&table[32], timeout_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[33], keyboard_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[34], slave_pic_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[35], serial_port2_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[36], serial_port1_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[37], parallel_port2_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[38], floppy_controller_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[39], parallel_port1_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[40], real_time_check_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     for (uint64_t i = 41; i < 44; i++) {
         register_interrupt_routine(&table[i], null_interrupt_routine,
-                segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+                segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
                 interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
     }
 
     register_interrupt_routine(&table[44], mouse_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[45], coprocessor_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[46], hdd1_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     register_interrupt_routine(&table[47], hdd2_routine,
-            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+            segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
             interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
 
     for (uint64_t i = 48; i < INTERRUPT_TABLE_SIZE; i++) {
         register_interrupt_routine(&table[i], null_interrupt_routine,
-                segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_SEGMENT_INDEX),
+                segment_selector(0, 0, GLOBAL_DESCRIPTOR_TABLE_KERNEL_CODE_INDEX),
                 interrupt_gate_descriptor_attribute(1, INTERRUPT_GATE_DESCRIPTOR_TYPE_INTERRUPT, 0));
     }
 
@@ -136,7 +135,7 @@ int initialize_interrupts(void)
 
     asm __volatile__("lidt %0" : : "m"(register_entry));
 
-    initialize_programmable_interrupt_controller();
+    interrupt_controller_initialize();
 
     asm __volatile__("sti");
 

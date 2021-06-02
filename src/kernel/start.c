@@ -1,34 +1,28 @@
 #include <debug/assert.h>
-
-#include <kernel/boot_data.h>
-#include <kernel/error.h>
-#include <kernel/shell.h>
-
-#include <memory/page_frame_allocator.h>
-#include <memory/paging.h>
-#include <memory/segmentation/initialize.h>
-
 #include <interrupts/initialize.h>
+#include <kernel/boot_data.h>
+#include <kernel/shell.h>
+#include <memory/frame_allocator.h>
+#include <memory/page.h>
+#include <memory/segment.h>
 
-int _start(const struct kernel_boot_data boot_data)
+int _start(const struct boot_data boot_data)
 {
-    initialize_print(boot_data.frame_buffer_data, boot_data.psf1_data);
+    print_initialize(boot_data.frame_buffer_data, boot_data.psf1_data);
 
-    int result = initialize_page_frame_allocator(boot_data.memory_map_data);
-    assert(!KERNEL_ERROR(result), "Failed to initialize the page frame allocator.");
+    int result = frame_allocator_initialize(boot_data.memory_map_data);
+    assert(result == 0, "Failed to initialize the page frame allocator.");
 
-    struct paging_data kernel_paging_data = { .level4_table = PAGE_NULL };
-    result = initialize_kernel_page_map(&kernel_paging_data);
-    assert(!KERNEL_ERROR(result), "Failed to initialize the paging.");
+    struct page_data kernel_page_data = { .level4_table = PAGE_NULL };
+    result = page_initialize_kernel_map(&kernel_page_data);
+    assert(result == 0, "Failed to initialize the page.");
+    page_load(kernel_page_data);
 
-    change_current_page_map(kernel_paging_data);
+    segment_initialize();
 
-    initialize_segmentation();
-    initialize_interrupts();
+    interrupts_initialize();
 
-    start_shell();
-
-    while (1) {}
+    shell_start();
 
     return 0;
 }

@@ -1,4 +1,4 @@
-#include "keyboard_manager.h"
+#include "manager.h"
 #include "scancode_to_ascii.h"
 
 struct scancode_to_ascii_table_entry {
@@ -122,21 +122,21 @@ static inline bool should_use_combined_key(uint8_t scancode)
     uint8_t down_scancode = scancode & 0x7F;
 
     if (is_alphabet(down_scancode)) {
-        return is_shift_down() != is_capslock_on();
+        return keyboard_manager_is_shift_down() != keyboard_manager_is_capslock_on();
     }
 
     if (is_number_or_symbol(down_scancode)) {
-        return is_shift_down();
+        return keyboard_manager_is_shift_down();
     }
 
     if (is_numbpad(down_scancode)) {
-        return is_numlock_on();
+        return keyboard_manager_is_numlock_on();
     }
 
     return 0;
 }
 
-char convert_scancode_to_ascii(uint8_t scancode)
+char scancode_to_ascii_convert(uint8_t scancode)
 {
     return should_use_combined_key(scancode)
         ? conversion_table[scancode].combined_code

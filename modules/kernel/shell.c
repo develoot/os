@@ -1,21 +1,21 @@
 #include <debug/assert.h>
-#include <drivers/keyboard/keyboard_manager.h>
+#include <drivers/keyboard/manager.h>
 
 #include "print.h"
 #include "shell.h"
 
-void start_shell(void)
+void shell_start(void)
 {
     char input;
     int result;
 
-    initialize_keyboard_manager();
+    keyboard_manager_initialize();
 
-    result = activate_keyboard();
+    result = keyboard_manager_activate_keyboard();
     assert(result == 0, "Failed to activate keyboard");
 
     while (1) {
-        result = get_keyboard_input(&input);
+        result = keyboard_manager_get_input(&input);
         if (result == 0) {
             print_char(input);
         }
