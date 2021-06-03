@@ -101,16 +101,13 @@ static void update_global_keyboard_manager_state(uint8_t scancode)
             global_keyboard_manager_data.is_scroll_lock_on);
 }
 
-void keyboard_manager_initialize(void)
+int keyboard_manager_initialize(void)
 {
-    global_keyboard_manager_data.is_capslock_on    = false;
-    global_keyboard_manager_data.is_numlock_on     = false;
+    global_keyboard_manager_data.is_capslock_on = false;
+    global_keyboard_manager_data.is_numlock_on = false;
     global_keyboard_manager_data.is_scroll_lock_on = false;
-    global_keyboard_manager_data.is_shift_down     = false;
-}
+    global_keyboard_manager_data.is_shift_down = false;
 
-int keyboard_manager_activate_keyboard(void)
-{
     keyboard_interrupt_handler_initialize();
 
     port_write(keyboard1, KEYBOARD_COMMAND_ACTIVATE_CONTROLLER);

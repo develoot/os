@@ -9,9 +9,7 @@ void shell_start(void)
     char input;
     int result;
 
-    keyboard_manager_initialize();
-
-    result = keyboard_manager_activate_keyboard();
+    result = keyboard_manager_initialize();
     assert(result == 0, "Failed to activate keyboard");
 
     while (1) {

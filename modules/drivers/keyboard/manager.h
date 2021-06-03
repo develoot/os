@@ -10,9 +10,7 @@ struct keyboard_manager_data {
     bool is_shift_down;
 };
 
-void keyboard_manager_initialize(void);
-
-int keyboard_manager_activate_keyboard(void);
+int keyboard_manager_initialize(void);
 
 void keyboard_manager_enable_a20(void);
 
