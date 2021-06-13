@@ -46,4 +46,6 @@ int print_format(const char *const format, ...);
 
 void print_clear(void);
 
+void print_newline(void);
+
 #endif

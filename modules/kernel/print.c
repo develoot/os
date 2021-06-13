@@ -4,6 +4,8 @@
 #include "print.h"
 
 #define PRINT_FORMAT_BUFFER_SIZE (1024)
+#define PSF1_GLYPH_HEIGHT (16)
+#define PSF1_GLYPH_WIDTH  (8)
 
 static struct console_data global_console_data;
 
@@ -12,8 +14,8 @@ int print_initialize(struct graphic_frame_buffer_data frame_buffer_data, struct 
     global_console_data.frame_buffer_data = frame_buffer_data;
     global_console_data.psf1_data = psf1_data;
 
-    global_console_data.cursor.x = 10;
-    global_console_data.cursor.y = 10;
+    global_console_data.cursor.x = 0;
+    global_console_data.cursor.y = 0;
 
     global_console_data.pixel_block_size = 1;
 
@@ -26,6 +28,11 @@ int print_initialize(struct graphic_frame_buffer_data frame_buffer_data, struct 
 
 void print_char(char character)
 {
+    if (character == '\n') {
+        print_newline();
+        return;
+    }
+
     static uint8_t row_masks[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
     struct graphic_frame_buffer_data *frame_buffer_data = &global_console_data.frame_buffer_data;
@@ -33,8 +40,8 @@ void print_char(char character)
     uint64_t block_size = global_console_data.pixel_block_size;
     uint8_t *glyph = &psf1_data->glyph_buffer[character * psf1_data->header.glyph_size];
 
-    for (uint64_t y_offset = 0; y_offset < 16; ++y_offset) {
-        for (uint64_t x_offset = 0; x_offset < 8; ++x_offset) {
+    for (uint64_t y_offset = 0; y_offset < PSF1_GLYPH_HEIGHT; ++y_offset) {
+        for (uint64_t x_offset = 0; x_offset < PSF1_GLYPH_WIDTH; ++x_offset) {
             if (glyph[y_offset] & row_masks[x_offset]) { /* If nth bit of this row is 1. */
                 screen_draw_block(frame_buffer_data,
                         global_console_data.cursor.x + (x_offset * block_size),
@@ -44,11 +51,11 @@ void print_char(char character)
         }
     }
 
-    global_console_data.cursor.x += block_size * 8;
+    global_console_data.cursor.x += block_size * PSF1_GLYPH_WIDTH;
 
     if (global_console_data.cursor.x >= frame_buffer_data->width) {
         global_console_data.cursor.x = 0;
-        global_console_data.cursor.y += block_size * 16;
+        global_console_data.cursor.y += block_size * PSF1_GLYPH_HEIGHT;
     }
 
     if (global_console_data.cursor.y >= frame_buffer_data->height) {
@@ -92,4 +99,10 @@ void print_clear(void)
             screen_draw_block(frame_buffer_data, j, i, 1, black);
         }
     }
+}
+
+void print_newline(void)
+{
+    global_console_data.cursor.x = 0;
+    global_console_data.cursor.y += global_console_data.pixel_block_size * PSF1_GLYPH_HEIGHT;
 }
