@@ -1,10 +1,12 @@
-#ifndef _INTERRUPTS_DUMMY_EXCEPTION_HANDLER_H
-#define _INTERRUPTS_DUMMY_EXCEPTION_HANDLER_H
+#ifndef _INTERRUPTS_DUMMY_HANDLERS_H
+#define _INTERRUPTS_DUMMY_HANDLERS_H
 
 #include <stdint.h>
 
+void dummy_interrupt_handler(const uint8_t interrupt_number);
 void dummy_exception_handler(const uint8_t exception_number, const uint64_t error_code);
 
+// TODO: Implement handlers below.
 void divide_error_handler(void);
 void debug_handler(void);
 void non_maskable_interrupt_handler(void);
