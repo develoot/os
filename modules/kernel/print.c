@@ -57,14 +57,14 @@ void print_char(char character)
     }
 }
 
-void print_string(char *string)
+void print_string(const char *const string)
 {
     for (uint64_t i = 0; string[i] != '\0'; ++i) {
         print_char(string[i]);
     }
 }
 
-int print_format(char *format, ...)
+int print_format(const char *const format, ...)
 {
     char buffer[PRINT_FORMAT_BUFFER_SIZE];
 

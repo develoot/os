@@ -40,9 +40,9 @@ int print_initialize(struct graphic_frame_buffer_data frame_buffer_data, struct 
 
 void print_char(char character);
 
-void print_string(char *string);
+void print_string(const char *const string);
 
-int print_format(char *format, ...);
+int print_format(const char *const format, ...);
 
 void print_clear(void);
 
