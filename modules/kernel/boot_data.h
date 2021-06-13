@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <drivers/graphic/screen.h>
 #include <general/address.h>
-#include <kernel/print.h>
+#include <kernel/console.h>
 #include <uefi/uefi.h>
 
 struct boot_data {

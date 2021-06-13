@@ -1,7 +1,7 @@
 #include <debug/assert.h>
 #include <drivers/keyboard/manager.h>
 
-#include "print.h"
+#include "console.h"
 #include "shell.h"
 
 void shell_start(void)
@@ -18,7 +18,7 @@ void shell_start(void)
             if (input != ' ' && input != '\n' && input != '\t' && (input < 'a' || 'z' < input)) {
                 continue;
             }
-            print_char(input);
+            console_print_char(input);
         }
     }
 }

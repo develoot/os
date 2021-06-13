@@ -1,4 +1,4 @@
-#include <kernel/print.h>
+#include <kernel/console.h>
 
 #include "control_register.h"
 #include "controller.h"
@@ -7,7 +7,7 @@
 
 void dummy_exception_handler(const uint8_t exception_number, const uint64_t error_code)
 {
-    print_format("Exception %u Error code %lu ", (uint32_t)exception_number, error_code);
+    console_print_format("Exception %u Error code %lu ", (uint32_t)exception_number, error_code);
     while (1);
 }
 

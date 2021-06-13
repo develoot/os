@@ -8,7 +8,9 @@
 
 int _start(const struct boot_data boot_data)
 {
-    print_initialize(boot_data.frame_buffer_data, boot_data.psf1_data);
+    struct pixel_color black = { .red = 0x00, .green = 0x00, .blue = 0x00 };
+    struct pixel_color white = { .red = 0xFF, .green = 0xFF, .blue = 0xFF };
+    console_initialize(boot_data.frame_buffer_data, boot_data.psf1_data, white, black, 1);
 
     int result = frame_allocator_initialize(boot_data.memory_map_data);
     assert(result == 0, "Failed to initialize the page frame allocator.");

@@ -2,6 +2,7 @@
 #define _DRIVERS_GRAPHIC_SCREEN_H
 
 #include <stdint.h>
+#include <general/address.h>
 #include <uefi/uefi.h>
 
 struct pixel_color {
@@ -11,7 +12,7 @@ struct pixel_color {
 };
 
 struct graphic_frame_buffer_data {
-    uint64_t address;
+    address_t address;
     uint64_t size;
     uint64_t width;
     uint64_t height;
@@ -19,7 +20,7 @@ struct graphic_frame_buffer_data {
     EFI_GRAPHICS_PIXEL_FORMAT pixel_format;
 };
 
-void screen_draw_block(const struct graphic_frame_buffer_data *const buffer_data, uint64_t x, uint64_t y,
-        uint64_t block_size, struct pixel_color color);
+void screen_draw_block(const struct graphic_frame_buffer_data *const buffer_data,
+        uint64_t x, uint64_t y, const struct pixel_color pixel, const uint64_t block_size);
 
 #endif
