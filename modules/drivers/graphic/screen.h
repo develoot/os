@@ -19,7 +19,7 @@ struct graphic_frame_buffer_data {
     EFI_GRAPHICS_PIXEL_FORMAT pixel_format;
 };
 
-void screen_draw_block(struct graphic_frame_buffer_data *buffer_data, uint64_t x, uint64_t y,
+void screen_draw_block(const struct graphic_frame_buffer_data *const buffer_data, uint64_t x, uint64_t y,
         uint64_t block_size, struct pixel_color color);
 
 #endif
