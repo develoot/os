@@ -6,6 +6,7 @@
 #define PRINT_FORMAT_BUFFER_SIZE (1024)
 #define PSF1_GLYPH_HEIGHT (16)
 #define PSF1_GLYPH_WIDTH  (8)
+#define PRINT_TAB_SIZE    (4)
 
 static struct console_data global_console_data;
 
@@ -28,17 +29,33 @@ int print_initialize(struct graphic_frame_buffer_data frame_buffer_data, struct 
 
 void print_char(char character)
 {
+    static const uint8_t row_masks[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+
+    struct graphic_frame_buffer_data *const frame_buffer_data = &global_console_data.frame_buffer_data;
+    struct psf1_data *const psf1_data = &global_console_data.psf1_data;
+    const uint64_t block_size = global_console_data.pixel_block_size;
+
     if (character == '\n') {
         print_newline();
         return;
     }
 
-    static uint8_t row_masks[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+    if (character == '\t') {
+        global_console_data.cursor.x += PSF1_GLYPH_WIDTH * block_size * PRINT_TAB_SIZE;
+        return;
+    }
 
-    struct graphic_frame_buffer_data *frame_buffer_data = &global_console_data.frame_buffer_data;
-    struct psf1_data *psf1_data = &global_console_data.psf1_data;
-    uint64_t block_size = global_console_data.pixel_block_size;
-    uint8_t *glyph = &psf1_data->glyph_buffer[character * psf1_data->header.glyph_size];
+    if (global_console_data.cursor.x >= frame_buffer_data->width) {
+        global_console_data.cursor.x = 0;
+        global_console_data.cursor.y += block_size * PSF1_GLYPH_HEIGHT;
+    }
+
+    if (global_console_data.cursor.y >= frame_buffer_data->height) {
+        print_clear();
+        global_console_data.cursor.y = 0;
+    }
+
+    uint8_t *const glyph = &psf1_data->glyph_buffer[character * psf1_data->header.glyph_size];
 
     for (uint64_t y_offset = 0; y_offset < PSF1_GLYPH_HEIGHT; ++y_offset) {
         for (uint64_t x_offset = 0; x_offset < PSF1_GLYPH_WIDTH; ++x_offset) {
@@ -52,16 +69,6 @@ void print_char(char character)
     }
 
     global_console_data.cursor.x += block_size * PSF1_GLYPH_WIDTH;
-
-    if (global_console_data.cursor.x >= frame_buffer_data->width) {
-        global_console_data.cursor.x = 0;
-        global_console_data.cursor.y += block_size * PSF1_GLYPH_HEIGHT;
-    }
-
-    if (global_console_data.cursor.y >= frame_buffer_data->height) {
-        print_clear();
-        global_console_data.cursor.y = 0;
-    }
 }
 
 void print_string(const char *const string)
