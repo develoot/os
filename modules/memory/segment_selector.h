@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <general/inline.h>
-
 /**
  * Return a segment selector.
  *
@@ -17,7 +15,7 @@
  * @param requested_privilege_level Specifies the privilege level of the selector. The privilege
  * level can range from 0 to 3, with 0 being the most privileged level.
  */
-always_inline uint16_t segment_selector(uint8_t requested_privilege_level, bool table_indicator,
+static inline uint16_t segment_selector(uint8_t requested_privilege_level, bool table_indicator,
         uint8_t segment_index)
 {
     return (uint16_t)(requested_privilege_level | table_indicator << 2 | segment_index << 3);

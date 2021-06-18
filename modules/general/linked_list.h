@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <general/address.h>
-#include <general/inline.h>
 
 #define container_of(MemberAddress, ContainerType, MemberName) \
     ((ContainerType *)((address_t)(MemberAddress) - offsetof(ContainerType, MemberName)))
@@ -18,13 +17,13 @@ struct linked_list_node {
     struct linked_list_node *previous;
 };
 
-always_inline void linked_list_initialize(struct linked_list_node *const head)
+static inline void linked_list_initialize(struct linked_list_node *const head)
 {
     head->next = head;
     head->previous = head;
 }
 
-always_inline void linked_list_append(struct linked_list_node *const head,
+static inline void linked_list_append(struct linked_list_node *const head,
         struct linked_list_node *const node)
 {
     struct linked_list_node *const last = head->previous;
@@ -33,7 +32,7 @@ always_inline void linked_list_append(struct linked_list_node *const head,
     node->previous = last;
 }
 
-always_inline struct linked_list_node *linked_list_get(struct linked_list_node *const head,
+static inline struct linked_list_node *linked_list_get(struct linked_list_node *const head,
         const uint64_t index)
 {
     struct linked_list_node *cursor = head;
@@ -45,7 +44,7 @@ always_inline struct linked_list_node *linked_list_get(struct linked_list_node *
     return cursor;
 }
 
-always_inline void linked_list_insert(struct linked_list_node *const head, const uint64_t index,
+static inline void linked_list_insert(struct linked_list_node *const head, const uint64_t index,
         struct linked_list_node *const new_node)
 {
     struct linked_list_node *const current = linked_list_get(head, index);
@@ -58,7 +57,7 @@ always_inline void linked_list_insert(struct linked_list_node *const head, const
     current->previous = new_node;
 }
 
-always_inline void linked_list_remove(struct linked_list_node *const node)
+static inline void linked_list_remove(struct linked_list_node *const node)
 {
     struct linked_list_node *const previous = node->previous;
     struct linked_list_node *const next = node->next;
@@ -67,12 +66,12 @@ always_inline void linked_list_remove(struct linked_list_node *const node)
     next->previous = previous;
 }
 
-always_inline bool linked_list_is_empty(struct linked_list_node *const head)
+static inline bool linked_list_is_empty(struct linked_list_node *const head)
 {
     return head->next == head;
 }
 
-always_inline size_t linked_list_size(struct linked_list_node *const head)
+static inline size_t linked_list_size(struct linked_list_node *const head)
 {
     size_t size = 0;
     struct linked_list_node *cursor = NULL;

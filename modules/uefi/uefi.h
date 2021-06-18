@@ -4,9 +4,8 @@
 #include <efi.h>
 #include <stddef.h>
 #include <general/address.h>
-#include <general/inline.h>
 
-always_inline EFI_MEMORY_DESCRIPTOR *uefi_memory_descriptor_next(
+static inline EFI_MEMORY_DESCRIPTOR *uefi_memory_descriptor_next(
         EFI_MEMORY_DESCRIPTOR *descriptor,
         size_t size)
 {
