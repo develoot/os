@@ -17,11 +17,11 @@ static inline pixel_value get_pixel_value(EFI_GRAPHICS_PIXEL_FORMAT pixel_format
 static inline void draw_pixel(const struct graphic_frame_buffer_data *const buffer_data,
         uint64_t x, uint64_t y, struct pixel_color pixel)
 {
-    if (x > buffer_data->width || y > buffer_data->height) {
+    if (x >= buffer_data->width || y >= buffer_data->height) {
         return;
     }
 
-    uint32_t *const frame_buffer = (pixel_value *)buffer_data->address;
+    pixel_value *const frame_buffer = (pixel_value *)buffer_data->address;
 
     frame_buffer[x + (y * buffer_data->pixel_per_scanline)]
         = get_pixel_value(buffer_data->pixel_format, pixel);

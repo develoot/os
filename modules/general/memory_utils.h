@@ -2,19 +2,26 @@
 #define _GENERAL_MEMORY_UTILS_H
 
 #include <stdint.h>
-#include <general/inline.h>
 
-always_inline void memory_copy(uint8_t *const destination, const uint8_t *source, uint64_t size)
+typedef uint8_t byte_t;
+
+static inline void memory_copy(void *const destination, const void *const source, uint64_t size)
 {
+    byte_t *const dst = (byte_t *)destination;
+    const byte_t *const src = (byte_t *)source;
+
     for (uint64_t i = 0; i < size; ++i) {
-        destination[i] = source[i];
+        dst[i] = src[i];
     }
 }
 
-always_inline int memory_compare(const uint8_t *first, const uint8_t *second, uint64_t size)
+static inline int memory_compare(const void *const first, const void *const second, uint64_t size)
 {
+    const byte_t *const frst = (byte_t *)first;
+    const byte_t *const scnd = (byte_t *)second;
+
     for (uint64_t i = 0; i < size; ++i) {
-        if (first[i] != second[i]) {
+        if (frst[i] != scnd[i]) {
             return -1;
         }
     }
