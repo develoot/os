@@ -1,7 +1,7 @@
 SYSLIB = /usr/lib
 EFIINC = /usr/include/efi
 CFLAGS = -I$(MODULES) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
-		 -Wall -Wextra -fpie -ffreestanding -fshort-wchar -g -DDEBUG_ASSERT
+		 -Wall -Wextra -fpie -ffreestanding -fshort-wchar -g -DDEBUG_ASSERT -O2
 LDFLAGS = -Bstatic -Bsymbolic -pie -nostdlib --gc-sections --no-undefined-version
 ASMFLAGS =
 
