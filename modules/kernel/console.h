@@ -23,11 +23,6 @@ struct psf1_data {
     uint8_t *glyph_buffer;
 };
 
-struct console_cursor {
-    uint64_t x;
-    uint64_t y;
-};
-
 int console_initialize(struct graphic_frame_buffer_data frame_buffer_data,
         struct psf1_data psf1_data, struct pixel_color foreground_color,
         struct pixel_color background_color, uint64_t pixel_block_size);
@@ -40,7 +35,7 @@ int console_print_string(const char *const string);
 
 int console_print_format(const char *const format, ...);
 
-void console_set_cursor(struct console_cursor cursor);
+void console_set_cursor(uint64_t x, uint64_t y);
 
 struct console_cursor console_get_cursor(void);
 
@@ -53,5 +48,7 @@ void console_set_pixel_block_size(uint64_t pixel_block_size);
 uint64_t console_get_width(void);
 
 uint64_t console_get_height(void);
+
+void console_draw(const char *const buffer, uint64_t row_size, uint64_t col_size);
 
 #endif

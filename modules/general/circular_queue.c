@@ -54,3 +54,8 @@ int circular_queue_pop(struct circular_queue_data *const circular_queue_data,
 
     return 0;
 }
+
+bool circular_queue_is_empty(const struct circular_queue_data *const circular_queue_data)
+{
+    return circular_queue_data->entry_number <= 0;
+}

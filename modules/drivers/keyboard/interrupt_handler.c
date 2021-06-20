@@ -33,7 +33,7 @@ void keyboard_interrupt_handler(const uint8_t interrupt_number)
     interrupt_controller_notify_end(interrupt_number - EXCEPTION_VECTOR_SIZE);
 }
 
-bool keyboard_interrupt_handler_queue_is_empty(void)
+bool keyboard_interrupt_handler_is_queue_empty(void)
 {
     return global_keyboard_queue_data.entry_number == 0;
 }

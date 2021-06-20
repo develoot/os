@@ -144,6 +144,10 @@ uint64_t frame_allocator_get_total_frame_number(void)
 
 frame_t frame_allcoator_request(uint64_t size)
 {
+    if (size == 0) {
+        return MEMORY_FRAME_NULL;
+    }
+
     if (global_frame_allocator_data.free_frame_number < size) {
         return MEMORY_FRAME_NULL;
     }

@@ -28,9 +28,9 @@ static inline void wait_while_input_buffer_is_full(void)
     while (is_input_buffer_full() == true);
 }
 
-static inline void wait_while_keyboard_interrupt_handler_queue_is_empty(void)
+static inline void wait_while_keyboard_interrupt_handler_is_queue_empty(void)
 {
-    while (keyboard_interrupt_handler_queue_is_empty() == true);
+    while (keyboard_interrupt_handler_is_queue_empty() == true);
 }
 
 static inline void write_command_on_port0(uint8_t command)
@@ -41,7 +41,7 @@ static inline void write_command_on_port0(uint8_t command)
 
 static inline scancode_t get_scancode(void)
 {
-    wait_while_keyboard_interrupt_handler_queue_is_empty();
+    wait_while_keyboard_interrupt_handler_is_queue_empty();
     return keyboard_interrupt_handler_get_scancode();
 }
 
@@ -164,6 +164,11 @@ int keyboard_manager_get_input(char *out)
     *out = scancode_to_ascii_convert(scancode);
 
     return 0;
+}
+
+bool keyboard_manager_is_buffer_empty(void)
+{
+    return keyboard_interrupt_handler_is_queue_empty();
 }
 
 bool keyboard_manager_is_capslock_on(void)

@@ -1,10 +1,233 @@
+#include <stddef.h>
+
 #include <debug/assert.h>
 #include <drivers/keyboard/manager.h>
+#include <general/circular_queue.h>
+#include <general/memory_utils.h>
+#include <kernel/console.h>
+#include <memory/frame_allocator.h>
 
-#include "console.h"
 #include "shell.h"
 
-void shell_start(void)
+#define SHELL_TAB_SIZE (4)
+
+struct cursor {
+    uint64_t row;
+    uint64_t col;
+};
+
+struct shell_data {
+    char *contents;
+    size_t contents_buffer_size;
+    size_t contents_row_size;
+    size_t contents_col_size;
+    struct cursor cursor;
+
+    struct circular_queue_data command_queue_data;
+    void *command_queue_buffer;
+    size_t command_queue_size;
+
+    struct circular_queue_data exchange_queue_data;
+    void *exchange_queue_buffer;
+    size_t exchange_queue_size;
+};
+
+static struct shell_data global_shell_data;
+
+static uint64_t get_index(uint64_t row, uint64_t col)
+{
+    return row * global_shell_data.contents_col_size + col;
+}
+
+static uint64_t get_next_index()
+{
+    return get_index(global_shell_data.cursor.row, global_shell_data.cursor.col);
+}
+
+static void shell_scroll_up(void)
+{
+    memory_copy(global_shell_data.contents,
+            &global_shell_data.contents[global_shell_data.contents_col_size],
+            (global_shell_data.contents_row_size - 1) * global_shell_data.contents_col_size);
+
+    for (uint64_t i = 0; i < global_shell_data.contents_col_size; ++i) {
+        global_shell_data.contents[get_index(global_shell_data.contents_row_size - 1, i)] = ' ';
+    }
+
+    if (global_shell_data.cursor.row > 0) {
+        --global_shell_data.cursor.row;
+    }
+
+    global_shell_data.cursor.col = 0;
+}
+
+static void increase_cursor(void)
+{
+    ++global_shell_data.cursor.col;
+
+    if (global_shell_data.cursor.col >= global_shell_data.contents_col_size) {
+        ++global_shell_data.cursor.row;
+        global_shell_data.cursor.col = 0;
+    }
+
+    if (global_shell_data.cursor.row >= global_shell_data.contents_row_size) {
+        shell_scroll_up();
+    }
+}
+
+static void newline(void)
+{
+    ++global_shell_data.cursor.row;
+    global_shell_data.cursor.col = 0;
+
+    if (global_shell_data.cursor.row >= global_shell_data.contents_row_size) {
+        shell_scroll_up();
+    }
+}
+
+static void insert_to_contents_buffer(char input)
+{
+    global_shell_data.contents[get_next_index()] = input;
+    increase_cursor();
+}
+
+static inline void process_command(void)
+{
+    // TODO: This function just echo given command. Handle the command properly.
+
+    char input;
+
+    while (circular_queue_pop(&global_shell_data.command_queue_data, &input) == 0) {
+        insert_to_contents_buffer(input);
+    }
+
+    insert_to_contents_buffer('!');
+}
+
+static inline bool exchange_queue_is_empty(void)
+{
+    return circular_queue_is_empty(&global_shell_data.exchange_queue_data);
+}
+
+static inline void process_outer_data(void)
+{
+    char data;
+
+    while (circular_queue_pop(&global_shell_data.exchange_queue_data, &data) == 0) {
+        insert_to_contents_buffer(data);
+    }
+}
+
+int shell_insert(const byte_t *const data, size_t size)
+{
+    int result = 0;
+
+    for (uint64_t i = 0; i < size; ++i) {
+        result = circular_queue_push(&global_shell_data.exchange_queue_data, &data[i]);
+        if (result != 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static inline bool is_valid_input(char input)
+{
+    // TODO: Better method?
+
+    if (input == ' '
+            || input == '\n'
+            || input == '\t'
+            || input == ','
+            || input == '.'
+            || input == '"'
+            || input == '&'
+            || input == '!'
+            || ('a' <= input && input <= 'z')
+            || ('A' <= input && input <= 'Z')) {
+        return true;
+    }
+
+    return false;
+}
+
+static inline void process_input(char input)
+{
+    if (input == '\n') {
+        newline();
+        process_command();
+        newline();
+        return;
+    }
+
+    if (input == '\t') {
+        for (uint64_t i = 0; i < SHELL_TAB_SIZE; ++i) {
+            insert_to_contents_buffer(' ');
+        }
+        return;
+    }
+
+    insert_to_contents_buffer(input);
+    circular_queue_push(&global_shell_data.command_queue_data, &input);
+}
+
+static inline int shell_initialize(void)
+{
+    const size_t required_buffer_size = console_get_width() * console_get_height();
+
+    const size_t contents_frame_number
+        = required_buffer_size % MEMORY_FRAME_SIZE == 0
+        ? required_buffer_size / MEMORY_FRAME_SIZE
+        : required_buffer_size / MEMORY_FRAME_SIZE + 1;
+    const size_t command_queue_buffer_frame_number = contents_frame_number;
+    const size_t exchange_queue_buffer_frame_number = contents_frame_number;
+
+    // TODO: This implementation suffers from internal fragmentation. We need a better allocator.
+
+    frame_t contents_frame = frame_allcoator_request(contents_frame_number);
+    if (contents_frame == MEMORY_FRAME_NULL) {
+        return -1;
+    }
+
+    frame_t command_queue_buffer_frame = frame_allcoator_request(command_queue_buffer_frame_number);
+    if (command_queue_buffer_frame == MEMORY_FRAME_NULL) {
+        frame_allocator_free(contents_frame, contents_frame_number);
+        return -2;
+    }
+
+    frame_t exchange_queue_buffer_frame = frame_allcoator_request(exchange_queue_buffer_frame_number);
+    if (exchange_queue_buffer_frame == MEMORY_FRAME_NULL) {
+        frame_allocator_free(contents_frame, contents_frame_number);
+        frame_allocator_free(command_queue_buffer_frame, command_queue_buffer_frame_number);
+        return -3;
+    }
+
+    global_shell_data.contents = contents_frame;
+    global_shell_data.contents_buffer_size = contents_frame_number * MEMORY_FRAME_SIZE;
+    global_shell_data.contents_row_size = console_get_height();
+    global_shell_data.contents_col_size = console_get_width();
+    global_shell_data.cursor.row = 0;
+    global_shell_data.cursor.col = 0;
+
+    global_shell_data.command_queue_buffer = command_queue_buffer_frame;
+    global_shell_data.command_queue_size = command_queue_buffer_frame_number * MEMORY_FRAME_SIZE;
+    circular_queue_initialize(&global_shell_data.command_queue_data, global_shell_data.command_queue_buffer,
+            global_shell_data.command_queue_size, sizeof(char));
+
+    global_shell_data.exchange_queue_buffer = exchange_queue_buffer_frame;
+    global_shell_data.exchange_queue_size = exchange_queue_buffer_frame_number * MEMORY_FRAME_SIZE;
+    circular_queue_initialize(&global_shell_data.exchange_queue_data, global_shell_data.exchange_queue_buffer,
+            global_shell_data.exchange_queue_size, sizeof(char));
+
+    for (uint64_t i = 0; i < global_shell_data.contents_buffer_size; ++i) {
+        global_shell_data.contents[i] = ' ';
+    }
+
+    return 0;
+}
+
+int shell_start(void)
 {
     char input;
     int result;
@@ -12,13 +235,25 @@ void shell_start(void)
     result = keyboard_manager_initialize();
     assert(result == 0, "Failed to activate keyboard");
 
+    result = shell_initialize();
+    assert(result == 0, "Failed to initialize shell");
+
     while (1) {
-        result = keyboard_manager_get_input(&input);
-        if (result == 0) {
-            if (input != ' ' && input != '\n' && input != '\t' && (input < 'a' || 'z' < input)) {
-                continue;
+        if (!keyboard_manager_is_buffer_empty()) {
+            result = keyboard_manager_get_input(&input);
+            if (result == 0 && is_valid_input(input)) {
+                process_input(input);
+                console_draw(global_shell_data.contents,
+                        global_shell_data.contents_row_size,
+                        global_shell_data.contents_col_size);
             }
-            console_print_char(input);
+        }
+
+        if (!exchange_queue_is_empty()) {
+            process_outer_data();
+            console_draw(global_shell_data.contents,
+                    global_shell_data.contents_row_size,
+                    global_shell_data.contents_col_size);
         }
     }
 }

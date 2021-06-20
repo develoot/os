@@ -10,6 +10,11 @@
 #define PSF1_GLYPH_HEIGHT (16)
 #define PSF1_GLYPH_WIDTH  (8)
 
+struct console_cursor {
+    uint64_t x;
+    uint64_t y;
+};
+
 struct console_data {
     struct console_cursor cursor;
     struct graphic_frame_buffer_data frame_buffer_data;
@@ -62,23 +67,12 @@ int console_print_char(char ch)
     struct graphic_frame_buffer_data *const frame_buffer_data = &global_console_data.frame_buffer_data;
     struct psf1_data *const psf1_data = &global_console_data.psf1_data;
 
-    if (ch == '\n') {
-        cursor->x = 0;
-        cursor->y += pixel_block_size * PSF1_GLYPH_HEIGHT;
-        return 0;
-    }
-
-    if (ch == '\t') {
-        cursor->x += pixel_block_size * PSF1_GLYPH_WIDTH * PRINT_TAB_SIZE;
-        return 0;
-    }
-
-    if (cursor->x + (pixel_block_size * PSF1_GLYPH_WIDTH) >= frame_buffer_data->width) {
+    if (cursor->x + (pixel_block_size * PSF1_GLYPH_WIDTH) > frame_buffer_data->width) {
         cursor->x = 0;
         cursor->y += pixel_block_size * PSF1_GLYPH_HEIGHT;
     }
 
-    if (cursor->y + (pixel_block_size * PSF1_GLYPH_HEIGHT) >= frame_buffer_data->height) {
+    if (cursor->y + (pixel_block_size * PSF1_GLYPH_HEIGHT) > frame_buffer_data->height) {
         return -1;
     }
 
@@ -90,6 +84,10 @@ int console_print_char(char ch)
                 screen_draw_block(frame_buffer_data,
                         cursor->x + (x * pixel_block_size), cursor->y + (y * pixel_block_size),
                         global_console_data.foreground_color, pixel_block_size);
+            } else {
+                screen_draw_block(frame_buffer_data,
+                        cursor->x + (x * pixel_block_size), cursor->y + (y * pixel_block_size),
+                        global_console_data.background_color, pixel_block_size);
             }
         }
     }
@@ -126,9 +124,10 @@ int console_print_format(const char *const format, ...)
     return 0;
 }
 
-void console_set_cursor(struct console_cursor cursor)
+void console_set_cursor(uint64_t x, uint64_t y)
 {
-    global_console_data.cursor = cursor;
+    global_console_data.cursor.x = x;
+    global_console_data.cursor.y = y;
 }
 
 struct console_cursor console_get_cursor(void)
@@ -165,4 +164,18 @@ uint64_t console_get_height(void)
     const uint64_t pixel_block_size = global_console_data.pixel_block_size;
 
     return frame_buffer_data->height / (pixel_block_size * PSF1_GLYPH_HEIGHT);
+}
+
+void console_draw(const char *const buffer, uint64_t row_size, uint64_t col_size)
+{
+    global_console_data.cursor.x = 0;
+    global_console_data.cursor.y = 0;
+
+    for (uint64_t row = 0; row < row_size; ++row) {
+        for (uint64_t col = 0; col < col_size; ++col) {
+            console_print_char(buffer[row * col_size + col]);
+        }
+        global_console_data.cursor.x = 0;
+        global_console_data.cursor.y += global_console_data.pixel_block_size * PSF1_GLYPH_HEIGHT;
+    }
 }

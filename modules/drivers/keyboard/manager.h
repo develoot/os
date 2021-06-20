@@ -18,6 +18,8 @@ void keyboard_manager_reset_processor(void);
 
 int keyboard_manager_get_input(char *const out);
 
+bool keyboard_manager_is_buffer_empty(void);
+
 bool keyboard_manager_is_capslock_on(void);
 
 bool keyboard_manager_is_numlock_on(void);
