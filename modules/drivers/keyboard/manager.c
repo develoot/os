@@ -45,7 +45,7 @@ static inline scancode_t get_scancode(void)
     return keyboard_interrupt_handler_get_scancode();
 }
 
-static struct keyboard_manager_data global_keyboard_manager_data;
+static struct keyboard_data global_keyboard_data;
 
 static int change_keyboard_led(bool is_capslock_on, bool is_numlock_on, bool is_scroll_lock_on)
 {
@@ -71,42 +71,42 @@ SUCCESS_FINDING_ACK:
     return -1;
 }
 
-static void update_global_keyboard_manager_state(uint8_t scancode)
+static void update_global_keyboard_state(uint8_t scancode)
 {
     if ((scancode == KEYBOARD_SCANCODE_LSHIFT_DOWN)
             || (scancode == KEYBOARD_SCANCODE_RSHIFT_DOWN)) {
-        global_keyboard_manager_data.is_shift_down = true;
+        global_keyboard_data.is_shift_down = true;
         return;
     }
 
     if ((scancode == KEYBOARD_SCANCODE_LSHIFT_UP)
             || (scancode == KEYBOARD_SCANCODE_RSHIFT_UP)) {
-        global_keyboard_manager_data.is_shift_down = false;
+        global_keyboard_data.is_shift_down = false;
         return;
     }
 
     if (scancode == KEYBOARD_SCANCODE_CAPSLOCK_DOWN) {
-        global_keyboard_manager_data.is_capslock_on = !global_keyboard_manager_data.is_capslock_on;
+        global_keyboard_data.is_capslock_on = !global_keyboard_data.is_capslock_on;
     } else if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
-        global_keyboard_manager_data.is_numlock_on = !global_keyboard_manager_data.is_numlock_on;
+        global_keyboard_data.is_numlock_on = !global_keyboard_data.is_numlock_on;
     } else if (scancode == KEYBOARD_SCANCODE_NUMLOCK_DOWN) {
-        global_keyboard_manager_data.is_scroll_lock_on =
-            !global_keyboard_manager_data.is_scroll_lock_on;
+        global_keyboard_data.is_scroll_lock_on =
+            !global_keyboard_data.is_scroll_lock_on;
     } else {
         return;
     }
 
-    change_keyboard_led(global_keyboard_manager_data.is_capslock_on,
-            global_keyboard_manager_data.is_numlock_on,
-            global_keyboard_manager_data.is_scroll_lock_on);
+    change_keyboard_led(global_keyboard_data.is_capslock_on,
+            global_keyboard_data.is_numlock_on,
+            global_keyboard_data.is_scroll_lock_on);
 }
 
-int keyboard_manager_initialize(void)
+int keyboard_initialize(void)
 {
-    global_keyboard_manager_data.is_capslock_on = false;
-    global_keyboard_manager_data.is_numlock_on = false;
-    global_keyboard_manager_data.is_scroll_lock_on = false;
-    global_keyboard_manager_data.is_shift_down = false;
+    global_keyboard_data.is_capslock_on = false;
+    global_keyboard_data.is_numlock_on = false;
+    global_keyboard_data.is_scroll_lock_on = false;
+    global_keyboard_data.is_shift_down = false;
 
     keyboard_interrupt_handler_initialize();
 
@@ -123,7 +123,7 @@ int keyboard_manager_initialize(void)
     return -1;
 }
 
-void keyboard_manager_enable_a20(void)
+void keyboard_enable_a20(void)
 {
     port_write(keyboard1, KEYBOARD_COMMAND_READ_CONTROLLER_OUT);
     uint8_t data = get_scancode();
@@ -133,13 +133,13 @@ void keyboard_manager_enable_a20(void)
     write_command_on_port0(data);
 }
 
-void keyboard_manager_reset_processor(void)
+void keyboard_reset_processor(void)
 {
     port_write(keyboard1, 0xD1);
     write_command_on_port0(0x00);
 }
 
-int keyboard_manager_get_input(char *out)
+int keyboard_get_input(char *out)
 {
     uint8_t scancode = get_scancode();
 
@@ -155,7 +155,7 @@ int keyboard_manager_get_input(char *out)
         scancode = get_scancode();
     }
 
-    update_global_keyboard_manager_state(scancode);
+    update_global_keyboard_state(scancode);
 
     if (scancode & 0x80) {
         return -1;
@@ -166,27 +166,27 @@ int keyboard_manager_get_input(char *out)
     return 0;
 }
 
-bool keyboard_manager_is_buffer_empty(void)
+bool keyboard_is_buffer_empty(void)
 {
     return keyboard_interrupt_handler_is_queue_empty();
 }
 
-bool keyboard_manager_is_capslock_on(void)
+bool keyboard_is_capslock_on(void)
 {
-    return global_keyboard_manager_data.is_capslock_on;
+    return global_keyboard_data.is_capslock_on;
 }
 
-bool keyboard_manager_is_numlock_on(void)
+bool keyboard_is_numlock_on(void)
 {
-    return global_keyboard_manager_data.is_numlock_on;
+    return global_keyboard_data.is_numlock_on;
 }
 
-bool keyboard_manager_is_scroll_lock_on(void)
+bool keyboard_is_scroll_lock_on(void)
 {
-    return global_keyboard_manager_data.is_scroll_lock_on;
+    return global_keyboard_data.is_scroll_lock_on;
 }
 
-bool keyboard_manager_is_shift_down(void)
+bool keyboard_is_shift_down(void)
 {
-    return global_keyboard_manager_data.is_shift_down;
+    return global_keyboard_data.is_shift_down;
 }

@@ -122,15 +122,15 @@ static inline bool should_use_combined_key(uint8_t scancode)
     uint8_t down_scancode = scancode & 0x7F;
 
     if (is_alphabet(down_scancode)) {
-        return keyboard_manager_is_shift_down() != keyboard_manager_is_capslock_on();
+        return keyboard_is_shift_down() != keyboard_is_capslock_on();
     }
 
     if (is_number_or_symbol(down_scancode)) {
-        return keyboard_manager_is_shift_down();
+        return keyboard_is_shift_down();
     }
 
     if (is_numbpad(down_scancode)) {
-        return keyboard_manager_is_numlock_on();
+        return keyboard_is_numlock_on();
     }
 
     return 0;

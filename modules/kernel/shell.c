@@ -295,7 +295,7 @@ int shell_start(void)
     char input;
     int result;
 
-    result = keyboard_manager_initialize();
+    result = keyboard_initialize();
     if (result != 0) {
         return -1;
     }
@@ -306,8 +306,8 @@ int shell_start(void)
     }
 
     while (1) {
-        if (!keyboard_manager_is_buffer_empty()) {
-            result = keyboard_manager_get_input(&input);
+        if (!keyboard_is_buffer_empty()) {
+            result = keyboard_get_input(&input);
             if (result == 0 && is_valid_input(input)) {
                 process_input(input);
                 console_draw(global_shell_data.contents,
