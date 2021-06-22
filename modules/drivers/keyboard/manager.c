@@ -146,7 +146,7 @@ int keyboard_manager_get_input(char *out)
     if (scancode == 0xE1) {
         get_scancode();
         get_scancode();
-        *out = KEY_PAUSE;
+        *out = ASCII_PAUSE;
         return 0;
     }
 

@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "ascii.h"
+
 struct keyboard_manager_data {
     bool is_capslock_on;
     bool is_numlock_on;
