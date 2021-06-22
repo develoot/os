@@ -183,6 +183,10 @@ static inline bool is_valid_input(char input)
             || input == '='
             || input == '+'
             || input == ASCII_BACKSPACE
+            || input == '['
+            || input == '{'
+            || input == ']'
+            || input == '}'
             || input == '\\'
             || input == '|'
             || input == ';'
@@ -190,7 +194,9 @@ static inline bool is_valid_input(char input)
             || input == '\''
             || input == '"'
             || input == ','
+            || input == '<'
             || input == '.'
+            || input == '>'
             || input == '/'
             || input == '?'
             || ('a' <= input && input <= 'z')
