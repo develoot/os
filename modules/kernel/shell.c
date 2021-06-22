@@ -139,13 +139,35 @@ static inline bool is_valid_input(char input)
     if (input == ' '
             || input == '\n'
             || input == '\t'
+            || input == '`'
+            || input == '~'
+            || input == '!'
+            || input == '@'
+            || input == '#'
+            || input == '$'
+            || input == '%'
+            || input == '^'
+            || input == '&'
+            || input == '*'
+            || input == '('
+            || input == ')'
+            || input == '-'
+            || input == '_'
+            || input == '='
+            || input == '+'
+            || input == '\\'
+            || input == '|'
+            || input == ';'
+            || input == ':'
+            || input == '\''
+            || input == '"'
             || input == ','
             || input == '.'
-            || input == '"'
-            || input == '&'
-            || input == '!'
+            || input == '/'
+            || input == '?'
             || ('a' <= input && input <= 'z')
-            || ('A' <= input && input <= 'Z')) {
+            || ('A' <= input && input <= 'Z')
+            || ('0' <= input && input <= '9')) {
         return true;
     }
 
