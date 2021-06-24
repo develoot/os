@@ -1,15 +1,13 @@
-// TODO: Separate buffers for contents, prompt, and etc. Composite them before render.
-
 #include <stddef.h>
 
 #include <drivers/keyboard/manager.h>
-#include <general/circular_queue.h>
 #include <general/memory_utils.h>
 #include <kernel/console.h>
 #include <memory/frame_allocator.h>
 
 #include "shell.h"
 
+#define PROMPT_SIZE    (3)
 #define SHELL_TAB_SIZE (4)
 
 struct cursor {
@@ -17,188 +15,153 @@ struct cursor {
     uint64_t col;
 };
 
+struct buffer_data {
+    char *items;
+    size_t size;
+    size_t row_size;
+    size_t col_size;
+    struct cursor cursor;
+};
+
 struct shell_data {
-    char *contents;
-    size_t contents_buffer_size;
-    size_t contents_row_size;
-    size_t contents_col_size;
-    struct cursor contents_cursor;
-
-    struct cursor command_begin_cursor;
-    struct cursor command_end_cursor;
-
-    struct circular_queue_data exchange_queue_data;
-    void *exchange_queue_buffer;
-    size_t exchange_queue_size;
+    struct buffer_data render;
+    struct buffer_data contents;
+    struct buffer_data command;
 };
 
 static struct shell_data global_shell_data;
 
-static uint64_t get_index(uint64_t row, uint64_t col)
+static uint64_t buffer_get_index(const struct buffer_data *const buffer, uint64_t row, uint64_t col)
 {
-    return row * global_shell_data.contents_col_size + col;
+    return row * buffer->col_size + col;
 }
 
-static uint64_t get_next_index()
+static uint64_t buffer_get_next_index(const struct buffer_data *const buffer)
 {
-    return get_index(global_shell_data.contents_cursor.row, global_shell_data.contents_cursor.col);
+    return buffer_get_index(buffer, buffer->cursor.row, buffer->cursor.col);
 }
 
-static void shell_scroll_up(void)
+static void buffer_scroll_up(struct buffer_data *const buffer)
 {
-    memory_copy(global_shell_data.contents,
-            &global_shell_data.contents[global_shell_data.contents_col_size],
-            (global_shell_data.contents_row_size - 1) * global_shell_data.contents_col_size);
+    memory_copy(buffer->items,
+            &buffer->items[buffer->col_size], (buffer->row_size - 1) * buffer->col_size);
 
-    for (uint64_t i = 0; i < global_shell_data.contents_col_size; ++i) {
-        global_shell_data.contents[get_index(global_shell_data.contents_row_size - 1, i)] = ' ';
+    for (uint64_t i = 0; i < buffer->col_size; ++i) {
+        buffer->items[buffer_get_index(buffer, buffer->row_size - 1, i)] = ' ';
     }
 
-    if (global_shell_data.contents_cursor.row > 0) {
-        --global_shell_data.contents_cursor.row;
-        --global_shell_data.command_begin_cursor.row;
-        --global_shell_data.command_end_cursor.row;
+    if (buffer->cursor.row > 0) {
+        --buffer->cursor.row;
     }
 }
 
-static void newline(void)
+static void buffer_newline(struct buffer_data *const buffer)
 {
-    ++global_shell_data.contents_cursor.row;
-    global_shell_data.contents_cursor.col = 0;
+    ++buffer->cursor.row;
+    buffer->cursor.col = 0;
 
-    if (global_shell_data.contents_cursor.row >= global_shell_data.contents_row_size) {
-        shell_scroll_up();
+    if (buffer->cursor.row >= buffer->row_size) {
+        buffer_scroll_up(buffer);
     }
 }
 
-static void increase_cursor(void)
+static void buffer_initialize(struct buffer_data *const buffer,
+        char *items, size_t size, size_t row_size, size_t col_size)
 {
-    ++global_shell_data.contents_cursor.col;
+    buffer->items = items;
+    buffer->size = size;
+    buffer->row_size = row_size;
+    buffer->col_size = col_size;
+    buffer->cursor.row = 0;
+    buffer->cursor.col = 0;
+}
 
-    if (global_shell_data.contents_cursor.col >= global_shell_data.contents_col_size) {
-        newline();
+static void buffer_increase_cursor(struct buffer_data *const buffer)
+{
+    ++buffer->cursor.col;
+
+    if (buffer->cursor.col >= buffer->col_size) {
+        buffer_newline(buffer);
     }
 }
 
-static void decrease_cursor(void)
+static int buffer_decrease_cursor(struct buffer_data *const buffer)
 {
-    if (global_shell_data.contents_cursor.col == 0) {
-        if (global_shell_data.contents_cursor.row == 0) {
-            return;
+    if (buffer->cursor.col == 0) {
+        if (buffer->cursor.row == 0) {
+            return -1;
         }
 
-        --global_shell_data.contents_cursor.row;
-        return;
+        --buffer->cursor.row;
+        return 0;
     }
 
-    --global_shell_data.contents_cursor.col;
+    --buffer->cursor.col;
+    return 0;
 }
 
-static void insert_to_contents_buffer(char input)
+static void buffer_push(struct buffer_data *const buffer, char input)
 {
-    global_shell_data.contents[get_next_index()] = input;
-    increase_cursor();
+    buffer->items[buffer_get_next_index(buffer)] = input;
+    buffer_increase_cursor(buffer);
+}
+
+static int buffer_pop(struct buffer_data *const buffer)
+{
+    if (buffer_decrease_cursor(buffer) != 0) {
+        return -1;
+    }
+
+    buffer->items[buffer_get_next_index(buffer)] = ' ';
+    return 0;
+}
+
+static char buffer_get(const struct buffer_data *const buffer, uint64_t row, uint64_t col)
+{
+    return buffer->items[buffer_get_index(buffer, row, col)];
 }
 
 static inline void process_command(void)
 {
-    // This function will not work as expected if your command is too long to be stored in console.
+    // Allocating buffer for prompt would be flexible enough to customize the prompt but complicated.
+    struct cursor current_cursor = { 0, PROMPT_SIZE }; // Start from column 7 because of prompt "shell$ ".
 
-    // TODO: This function just echo given command. Handle the it properly.
+    while (current_cursor.row != global_shell_data.command.cursor.row
+            || current_cursor.col != global_shell_data.command.cursor.col) {
 
-    struct cursor current_cursor = global_shell_data.command_begin_cursor;
-
-    while (current_cursor.row != global_shell_data.command_end_cursor.row
-            || current_cursor.col != global_shell_data.command_end_cursor.col) {
-        insert_to_contents_buffer(
-                global_shell_data.contents[get_index(current_cursor.row, current_cursor.col)]);
-
-        ++current_cursor.col;
-
-        if (current_cursor.col >= global_shell_data.contents_col_size) {
+        if (current_cursor.col >= global_shell_data.command.col_size) {
             ++current_cursor.row;
             current_cursor.col = 0;
+            continue;
         }
 
-        if (current_cursor.row >= global_shell_data.contents_row_size) {
-            // Something went wrong.
-            return;
-        }
+        buffer_push(&global_shell_data.contents,
+                buffer_get(&global_shell_data.command, current_cursor.row, current_cursor.col));
+
+        ++current_cursor.col;
     }
 
-    insert_to_contents_buffer('!');
-    newline();
+    buffer_push(&global_shell_data.contents, '!');
+    buffer_newline(&global_shell_data.contents);
 
-    global_shell_data.command_begin_cursor = global_shell_data.contents_cursor;
-    global_shell_data.command_end_cursor = global_shell_data.contents_cursor;
-}
-
-static inline bool exchange_queue_is_empty(void)
-{
-    return circular_queue_is_empty(&global_shell_data.exchange_queue_data);
-}
-
-static inline void process_outer_data(void)
-{
-    char data;
-
-    while (circular_queue_pop(&global_shell_data.exchange_queue_data, &data) == 0) {
-        insert_to_contents_buffer(data);
-    }
-}
-
-int shell_insert(const byte_t *const data, size_t size)
-{
-    int result = 0;
-
-    for (uint64_t i = 0; i < size; ++i) {
-        result = circular_queue_push(&global_shell_data.exchange_queue_data, &data[i]);
-        if (result != 0) {
-            return -1;
-        }
-    }
-
-    return 0;
+    global_shell_data.command.cursor.row = 0;
+    global_shell_data.command.cursor.col = PROMPT_SIZE;
 }
 
 static inline bool is_valid_input(char input)
 {
-    if (input == ' '
-            || input == '\n'
-            || input == '\t'
-            || input == '`'
-            || input == '~'
-            || input == '!'
-            || input == '@'
-            || input == '#'
-            || input == '$'
-            || input == '%'
-            || input == '^'
-            || input == '&'
-            || input == '*'
-            || input == '('
-            || input == ')'
-            || input == '-'
-            || input == '_'
-            || input == '='
-            || input == '+'
-            || input == ASCII_BACKSPACE
-            || input == '['
-            || input == '{'
-            || input == ']'
-            || input == '}'
-            || input == '\\'
-            || input == '|'
-            || input == ';'
-            || input == ':'
-            || input == '\''
-            || input == '"'
-            || input == ','
-            || input == '<'
-            || input == '.'
-            || input == '>'
-            || input == '/'
-            || input == '?'
+    if (input == ' ' || input == '\n' || input == '\t'
+            || input == '`'             || input == '~'             || input == '!'
+            || input == '@'             || input == '#'             || input == '$'
+            || input == '%'             || input == '^'             || input == '&'
+            || input == '*'             || input == '('             || input == ')'
+            || input == '-'             || input == '_'             || input == '='
+            || input == '+'             || input == ASCII_BACKSPACE || input == '['
+            || input == '{'             || input == ']'             || input == '}'
+            || input == '\\'            || input == '|'             || input == ';'
+            || input == ':'             || input == '\''            || input == '"'
+            || input == ','             || input == '<'             || input == '.'
+            || input == '>'             || input == '/'             || input == '?'
             || ('a' <= input && input <= 'z')
             || ('A' <= input && input <= 'Z')
             || ('0' <= input && input <= '9')) {
@@ -211,83 +174,128 @@ static inline bool is_valid_input(char input)
 static inline void process_input(char input)
 {
     if (input == '\n') {
-        newline();
         process_command();
         return;
     }
 
     if (input == '\t') {
         for (uint64_t i = 0; i < SHELL_TAB_SIZE; ++i) {
-            insert_to_contents_buffer(' ');
+            buffer_push(&global_shell_data.command, ' ');
         }
         return;
     }
 
     if (input == ASCII_BACKSPACE) {
-        if (global_shell_data.contents_cursor.row < global_shell_data.command_begin_cursor.row) {
-            return;
-        }
-
-        if (global_shell_data.contents_cursor.row == global_shell_data.command_begin_cursor.row
-                && global_shell_data.contents_cursor.col <= global_shell_data.command_begin_cursor.col) {
-            return;
-        }
-
-        decrease_cursor();
-        insert_to_contents_buffer(' ');
-        decrease_cursor();
+        buffer_pop(&global_shell_data.command);
         return;
     }
 
-    insert_to_contents_buffer(input);
-    global_shell_data.command_end_cursor = global_shell_data.contents_cursor;
+    buffer_push(&global_shell_data.command, input);
+}
+
+static inline void buffer_push_prompt(struct buffer_data *const buffer)
+{
+    buffer_push(buffer, '$');
+    buffer_push(buffer, '>');
+    buffer_push(buffer, ' ');
 }
 
 static inline int shell_initialize(void)
 {
-    const size_t required_buffer_size = console_get_width() * console_get_height();
+    const uint64_t console_width = console_get_width();
+    const uint64_t console_height = console_get_height();
+    const size_t required_buffer_size = console_width * console_height;
 
-    const size_t contents_frame_number
-        = required_buffer_size % MEMORY_FRAME_SIZE == 0
+    const size_t render_frame_number = required_buffer_size % MEMORY_FRAME_SIZE == 0
         ? required_buffer_size / MEMORY_FRAME_SIZE
         : required_buffer_size / MEMORY_FRAME_SIZE + 1;
-    const size_t exchange_queue_buffer_frame_number = contents_frame_number;
+    const size_t contents_frame_number = render_frame_number;
+    const size_t command_frame_number = render_frame_number;
 
     // TODO: This implementation suffers from internal fragmentation. We need a better allocator.
 
-    frame_t contents_frame = frame_allcoator_request(contents_frame_number);
-    if (contents_frame == MEMORY_FRAME_NULL) {
+    frame_t render_frame = frame_allcoator_request(render_frame_number);
+    if (render_frame == MEMORY_FRAME_NULL) {
         return -1;
     }
 
-    frame_t exchange_queue_buffer_frame = frame_allcoator_request(exchange_queue_buffer_frame_number);
-    if (exchange_queue_buffer_frame == MEMORY_FRAME_NULL) {
-        frame_allocator_free(contents_frame, contents_frame_number);
+    frame_t contents_frame = frame_allcoator_request(contents_frame_number);
+    if (contents_frame == MEMORY_FRAME_NULL) {
+        frame_allocator_free(render_frame, render_frame_number);
         return -2;
     }
 
-    global_shell_data.contents = contents_frame;
-    global_shell_data.contents_buffer_size = contents_frame_number * MEMORY_FRAME_SIZE;
-    global_shell_data.contents_row_size = console_get_height();
-    global_shell_data.contents_col_size = console_get_width();
-    global_shell_data.contents_cursor.row = 0;
-    global_shell_data.contents_cursor.col = 0;
+    frame_t command_frame = frame_allcoator_request(command_frame_number);
+    if (command_frame == MEMORY_FRAME_NULL) {
+        frame_allocator_free(render_frame, render_frame_number);
+        frame_allocator_free(contents_frame, contents_frame_number);
+        return -3;
+    }
 
-    global_shell_data.command_begin_cursor.row = 0;
-    global_shell_data.command_begin_cursor.col = 0;
-    global_shell_data.command_end_cursor.row = 0;
-    global_shell_data.command_end_cursor.col = 0;
+    buffer_initialize(&global_shell_data.render, render_frame,
+            render_frame_number * MEMORY_FRAME_SIZE, console_height, console_width);
 
-    global_shell_data.exchange_queue_buffer = exchange_queue_buffer_frame;
-    global_shell_data.exchange_queue_size = exchange_queue_buffer_frame_number * MEMORY_FRAME_SIZE;
-    circular_queue_initialize(&global_shell_data.exchange_queue_data, global_shell_data.exchange_queue_buffer,
-            global_shell_data.exchange_queue_size, sizeof(char));
+    buffer_initialize(&global_shell_data.contents, contents_frame,
+            contents_frame_number * MEMORY_FRAME_SIZE, console_height, console_width);
 
-    for (uint64_t i = 0; i < global_shell_data.contents_buffer_size; ++i) {
-        global_shell_data.contents[i] = ' ';
+    buffer_initialize(&global_shell_data.command, command_frame,
+            command_frame_number * MEMORY_FRAME_SIZE, console_height, console_width);
+    buffer_push_prompt(&global_shell_data.command);
+
+    for (uint64_t i = 0; i < global_shell_data.render.size; ++i) {
+        global_shell_data.render.items[i] = ' ';
+    }
+
+    for (uint64_t i = 0; i < global_shell_data.contents.size; ++i) {
+        global_shell_data.contents.items[i] = ' ';
     }
 
     return 0;
+}
+
+static void composite(void)
+{
+    for (uint64_t i = 0; i < global_shell_data.render.size; ++i) {
+        global_shell_data.render.items[i] = ' ';
+    }
+
+    global_shell_data.render.cursor.row = 0;
+    global_shell_data.render.cursor.col = 0;
+
+    struct cursor current_cursor = { 0, 0 };
+
+    while (current_cursor.row != global_shell_data.contents.cursor.row
+            || current_cursor.col != global_shell_data.contents.cursor.col) {
+
+        if (current_cursor.col >= global_shell_data.contents.col_size) {
+            ++current_cursor.row;
+            current_cursor.col = 0;
+            continue;
+        }
+
+        buffer_push(&global_shell_data.render,
+                buffer_get(&global_shell_data.contents, current_cursor.row, current_cursor.col));
+
+        ++current_cursor.col;
+    }
+
+    current_cursor.row = 0;
+    current_cursor.col = 0;
+
+    while (current_cursor.row != global_shell_data.command.cursor.row
+            || current_cursor.col != global_shell_data.command.cursor.col) {
+
+        if (current_cursor.col >= global_shell_data.command.col_size) {
+            ++current_cursor.row;
+            current_cursor.col = 0;
+            continue;
+        }
+
+        buffer_push(&global_shell_data.render,
+                buffer_get(&global_shell_data.command, current_cursor.row, current_cursor.col));
+
+        ++current_cursor.col;
+    }
 }
 
 int shell_start(void)
@@ -310,17 +318,11 @@ int shell_start(void)
             result = keyboard_get_input(&input);
             if (result == 0 && is_valid_input(input)) {
                 process_input(input);
-                console_draw(global_shell_data.contents,
-                        global_shell_data.contents_row_size,
-                        global_shell_data.contents_col_size);
+                composite();
+                console_draw(global_shell_data.render.items,
+                        global_shell_data.render.row_size,
+                        global_shell_data.render.col_size);
             }
-        }
-
-        if (!exchange_queue_is_empty()) {
-            process_outer_data();
-            console_draw(global_shell_data.contents,
-                    global_shell_data.contents_row_size,
-                    global_shell_data.contents_col_size);
         }
     }
 }
