@@ -125,49 +125,19 @@ static int buffer_pop(struct buffer_data *const buffer)
     return 0;
 }
 
-static char buffer_get(const struct buffer_data *const buffer, uint64_t row, uint64_t col)
-{
-    return buffer->items[buffer_get_index(buffer, row, col)];
-}
-
 static inline void process_command(void)
 {
-    struct cursor current_cursor = { 0, 0 };
-
-    while (current_cursor.row != global_shell_data.command.cursor.row
-            || current_cursor.col != global_shell_data.command.cursor.col) {
-
-        if (current_cursor.col >= global_shell_data.command.col_size) {
-            ++current_cursor.row;
-            current_cursor.col = 0;
-            continue;
-        }
-
-        buffer_push(&global_shell_data.contents,
-                buffer_get(&global_shell_data.command, current_cursor.row, current_cursor.col));
-
-        ++current_cursor.col;
+    for (uint64_t i = 0; i < buffer_get_index(&global_shell_data.command,
+                global_shell_data.command.cursor.row, global_shell_data.command.cursor.col); ++i) {
+        buffer_push(&global_shell_data.contents, global_shell_data.command.items[i]);
     }
     buffer_newline(&global_shell_data.contents);
 
     buffer_push_string(&global_shell_data.contents, "Unknown command: ");
 
-    current_cursor.row = 0;
-    current_cursor.col = PROMPT_SIZE;
-
-    while (current_cursor.row != global_shell_data.command.cursor.row
-            || current_cursor.col != global_shell_data.command.cursor.col) {
-
-        if (current_cursor.col >= global_shell_data.command.col_size) {
-            ++current_cursor.row;
-            current_cursor.col = 0;
-            continue;
-        }
-
-        buffer_push(&global_shell_data.contents,
-                buffer_get(&global_shell_data.command, current_cursor.row, current_cursor.col));
-
-        ++current_cursor.col;
+    for (uint64_t i = PROMPT_SIZE; i < buffer_get_index(&global_shell_data.command,
+                global_shell_data.command.cursor.row, global_shell_data.command.cursor.col); ++i) {
+        buffer_push(&global_shell_data.contents, global_shell_data.command.items[i]);
     }
     buffer_newline(&global_shell_data.contents);
 
@@ -288,39 +258,14 @@ static void composite(void)
     global_shell_data.render.cursor.row = 0;
     global_shell_data.render.cursor.col = 0;
 
-    struct cursor current_cursor = { 0, 0 };
-
-    while (current_cursor.row != global_shell_data.contents.cursor.row
-            || current_cursor.col != global_shell_data.contents.cursor.col) {
-
-        if (current_cursor.col >= global_shell_data.contents.col_size) {
-            ++current_cursor.row;
-            current_cursor.col = 0;
-            continue;
-        }
-
-        buffer_push(&global_shell_data.render,
-                buffer_get(&global_shell_data.contents, current_cursor.row, current_cursor.col));
-
-        ++current_cursor.col;
+    for (uint64_t i = 0; i < buffer_get_index(&global_shell_data.contents,
+                global_shell_data.contents.cursor.row, global_shell_data.contents.cursor.col); ++i) {
+        buffer_push(&global_shell_data.render, global_shell_data.contents.items[i]);
     }
 
-    current_cursor.row = 0;
-    current_cursor.col = 0;
-
-    while (current_cursor.row != global_shell_data.command.cursor.row
-            || current_cursor.col != global_shell_data.command.cursor.col) {
-
-        if (current_cursor.col >= global_shell_data.command.col_size) {
-            ++current_cursor.row;
-            current_cursor.col = 0;
-            continue;
-        }
-
-        buffer_push(&global_shell_data.render,
-                buffer_get(&global_shell_data.command, current_cursor.row, current_cursor.col));
-
-        ++current_cursor.col;
+    for (uint64_t i = 0; i < buffer_get_index(&global_shell_data.command,
+                global_shell_data.command.cursor.row, global_shell_data.command.cursor.col); ++i) {
+        buffer_push(&global_shell_data.render, global_shell_data.command.items[i]);
     }
 }
 
