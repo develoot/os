@@ -2,12 +2,14 @@
 
 #include <drivers/keyboard/manager.h>
 #include <general/memory_utils.h>
+#include <general/string.h>
 #include <kernel/console.h>
 #include <memory/frame_allocator.h>
 
 #include "shell.h"
 
-#define PROMPT_SIZE    (3)
+#define PROMPT         ("$> ")
+#define PROMPT_SIZE    (string_length(PROMPT))
 #define SHELL_TAB_SIZE (4)
 
 struct cursor {
@@ -106,6 +108,13 @@ static void buffer_push(struct buffer_data *const buffer, char input)
     buffer_increase_cursor(buffer);
 }
 
+static void buffer_push_string(struct buffer_data *const buffer, const char *const string)
+{
+    for (uint64_t i = 0; string[i] != '\0'; ++i) {
+        buffer_push(buffer, string[i]);
+    }
+}
+
 static int buffer_pop(struct buffer_data *const buffer)
 {
     if (buffer_decrease_cursor(buffer) != 0) {
@@ -123,8 +132,7 @@ static char buffer_get(const struct buffer_data *const buffer, uint64_t row, uin
 
 static inline void process_command(void)
 {
-    // Allocating buffer for prompt would be flexible enough to customize the prompt but complicated.
-    struct cursor current_cursor = { 0, PROMPT_SIZE }; // Start from column 7 because of prompt "shell$ ".
+    struct cursor current_cursor = { 0, 0 };
 
     while (current_cursor.row != global_shell_data.command.cursor.row
             || current_cursor.col != global_shell_data.command.cursor.col) {
@@ -140,8 +148,27 @@ static inline void process_command(void)
 
         ++current_cursor.col;
     }
+    buffer_newline(&global_shell_data.contents);
 
-    buffer_push(&global_shell_data.contents, '!');
+    buffer_push_string(&global_shell_data.contents, "Unknown command: ");
+
+    current_cursor.row = 0;
+    current_cursor.col = PROMPT_SIZE;
+
+    while (current_cursor.row != global_shell_data.command.cursor.row
+            || current_cursor.col != global_shell_data.command.cursor.col) {
+
+        if (current_cursor.col >= global_shell_data.command.col_size) {
+            ++current_cursor.row;
+            current_cursor.col = 0;
+            continue;
+        }
+
+        buffer_push(&global_shell_data.contents,
+                buffer_get(&global_shell_data.command, current_cursor.row, current_cursor.col));
+
+        ++current_cursor.col;
+    }
     buffer_newline(&global_shell_data.contents);
 
     global_shell_data.command.cursor.row = 0;
@@ -195,9 +222,8 @@ static inline void process_input(char input)
 
 static inline void buffer_push_prompt(struct buffer_data *const buffer)
 {
-    buffer_push(buffer, '$');
-    buffer_push(buffer, '>');
-    buffer_push(buffer, ' ');
+    // Allocating buffer for prompt would be more flexible but complicated.
+    buffer_push_string(buffer, PROMPT);
 }
 
 static inline int shell_initialize(void)
