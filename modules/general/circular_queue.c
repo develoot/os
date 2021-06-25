@@ -1,4 +1,4 @@
-#include <general/memory_utils.h>
+#include <general/memory.h>
 
 #include "circular_queue.h"
 

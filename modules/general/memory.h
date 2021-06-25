@@ -1,5 +1,5 @@
-#ifndef _GENERAL_MEMORY_UTILS_H
-#define _GENERAL_MEMORY_UTILS_H
+#ifndef _GENERAL_MEMORY_H
+#define _GENERAL_MEMORY_H
 
 #include <stdint.h>
 

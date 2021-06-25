@@ -1,7 +1,7 @@
 #include <stddef.h>
 
 #include <drivers/keyboard/manager.h>
-#include <general/memory_utils.h>
+#include <general/memory.h>
 #include <general/string.h>
 #include <kernel/console.h>
 #include <memory/frame_allocator.h>

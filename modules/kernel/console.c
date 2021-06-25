@@ -1,6 +1,6 @@
 #include <stdarg.h>
 #include <drivers/graphic/screen.h>
-#include <general/memory_utils.h>
+#include <general/memory.h>
 #include <general/string.h>
 
 #include "console.h"
