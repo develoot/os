@@ -217,3 +217,17 @@ int string_format_va(char *const output_buffer, const uint64_t output_buffer_siz
 
     return 0;
 }
+
+int string_compare(const char *a, const char *b)
+{
+    while (*a != '\0' && *b != '\0') {
+        if (*a != *b) {
+            return -1;
+        }
+
+        ++a;
+        ++b;
+    }
+
+    return 0;
+}

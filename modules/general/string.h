@@ -22,4 +22,6 @@ int string_format_va(char *const output_buffer, const uint64_t output_buffer_siz
 
 size_t string_length(const char *const string);
 
+int string_compare(const char *a, const char *b);
+
 #endif
