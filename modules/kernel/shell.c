@@ -25,10 +25,12 @@ struct buffer_data {
     struct cursor cursor;
 };
 
+// TODO: mutex
 struct shell_data {
     struct buffer_data render;
     struct buffer_data contents;
     struct buffer_data command;
+    struct buffer_data exchange;
 };
 
 static struct shell_data global_shell_data;
@@ -196,6 +198,26 @@ static inline void buffer_push_prompt(struct buffer_data *const buffer)
     buffer_push_string(buffer, PROMPT);
 }
 
+static bool is_exchange_buffer_empty(void)
+{
+    if (global_shell_data.exchange.cursor.row > 0 || global_shell_data.exchange.cursor.col > 0) {
+        return false;
+    }
+
+    return true;
+}
+
+static inline void process_exchange_buffer(void)
+{
+    for (uint64_t i = 0; i < buffer_get_index(&global_shell_data.exchange,
+                global_shell_data.exchange.cursor.row, global_shell_data.exchange.cursor.col); ++i) {
+        buffer_push(&global_shell_data.contents, global_shell_data.exchange.items[i]);
+    }
+
+    global_shell_data.exchange.cursor.row = 0;
+    global_shell_data.exchange.cursor.col = 0;
+}
+
 static inline int shell_initialize(void)
 {
     const uint64_t console_width = console_get_width();
@@ -207,6 +229,7 @@ static inline int shell_initialize(void)
         : required_buffer_size / MEMORY_FRAME_SIZE + 1;
     const size_t contents_frame_number = render_frame_number;
     const size_t command_frame_number = render_frame_number;
+    const size_t exchange_frame_number = render_frame_number;
 
     // TODO: This implementation suffers from internal fragmentation. We need a better allocator.
 
@@ -228,6 +251,14 @@ static inline int shell_initialize(void)
         return -3;
     }
 
+    frame_t exchange_frame = frame_allcoator_request(exchange_frame_number);
+    if (exchange_frame == MEMORY_FRAME_NULL) {
+        frame_allocator_free(render_frame, render_frame_number);
+        frame_allocator_free(contents_frame, contents_frame_number);
+        frame_allocator_free(command_frame, command_frame_number);
+        return -4;
+    }
+
     buffer_initialize(&global_shell_data.render, render_frame,
             render_frame_number * MEMORY_FRAME_SIZE, console_height, console_width);
 
@@ -237,6 +268,9 @@ static inline int shell_initialize(void)
     buffer_initialize(&global_shell_data.command, command_frame,
             command_frame_number * MEMORY_FRAME_SIZE, console_height, console_width);
     buffer_push_prompt(&global_shell_data.command);
+
+    buffer_initialize(&global_shell_data.exchange, exchange_frame,
+            exchange_frame_number * MEMORY_FRAME_SIZE, console_height, console_width);
 
     for (uint64_t i = 0; i < global_shell_data.render.size; ++i) {
         global_shell_data.render.items[i] = ' ';
@@ -295,5 +329,43 @@ int shell_start(void)
                         global_shell_data.render.col_size);
             }
         }
+
+        if (!is_exchange_buffer_empty()) {
+            process_exchange_buffer();
+            composite();
+            console_draw(global_shell_data.render.items,
+                    global_shell_data.render.row_size,
+                    global_shell_data.render.col_size);
+        }
     }
+}
+
+int shell_insert(const byte_t *const data, size_t size)
+{
+    for (uint64_t i = 0; i < size; ++i) {
+        if (!is_valid_input(data[i])) {
+            continue;
+        }
+
+        if (data[i] == '\n') {
+            buffer_newline(&global_shell_data.exchange);
+            continue;
+        }
+
+        if (data[i] == '\t') {
+            for (uint64_t i = 0; i < SHELL_TAB_SIZE; ++i) {
+                buffer_push(&global_shell_data.exchange, ' ');
+            }
+            continue;
+        }
+
+        if (data[i] == ASCII_BACKSPACE) {
+            buffer_pop(&global_shell_data.exchange);
+            continue;
+        }
+
+        buffer_push(&global_shell_data.exchange, data[i]);
+    }
+
+    return 0;
 }
