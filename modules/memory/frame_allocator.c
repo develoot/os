@@ -1,7 +1,6 @@
 /** TODO: Implement zoned page frame allocator. */
 
 #include <stdbool.h>
-
 #include <debug/assert.h>
 #include <general/address.h>
 
@@ -142,37 +141,33 @@ uint64_t frame_allocator_get_total_frame_number(void)
     return global_frame_allocator_data.total_frame_number;
 }
 
-frame_t frame_allcoator_request(uint64_t size)
+frame_t frame_allcoator_request(uint64_t requested_size)
 {
-    if (size == 0) {
+    if (global_frame_allocator_data.free_frame_number < requested_size) {
         return MEMORY_FRAME_NULL;
     }
 
-    if (global_frame_allocator_data.free_frame_number < size) {
-        return MEMORY_FRAME_NULL;
-    }
-
-    frame_t new_frame = MEMORY_FRAME_NULL;
+    frame_t allocated_frames = MEMORY_FRAME_NULL;
     uint8_t *const bitmap = global_frame_allocator_data.bitmap;
 
     uint64_t current_frame_size = 0;
-    for (uint64_t bit_index = 0;
-            bit_index < global_frame_allocator_data.total_frame_number;
-            bit_index++) {
-        if (get_bit(bitmap, bit_index) == true) {
+    for (uint64_t current_bit_index = 0;
+            current_bit_index < global_frame_allocator_data.total_frame_number;
+            ++current_bit_index) {
+        if (get_bit(bitmap, current_bit_index) == true) {
             current_frame_size = 0;
             continue;
         }
-        current_frame_size++;
-        if (current_frame_size == size) {
-            set_bits(bitmap, bit_index - size + 1, size, true);
-            global_frame_allocator_data.free_frame_number -= size;
-            new_frame = (frame_t)convert_index_to_address(bit_index - size + 1);
+        if (current_frame_size == requested_size) {
+            set_bits(bitmap, current_bit_index - requested_size + 1, requested_size, true);
+            global_frame_allocator_data.free_frame_number -= requested_size;
+            allocated_frames = (frame_t)convert_index_to_address(current_bit_index - requested_size + 1);
             break;
         }
+        current_frame_size++;
     }
 
-    return new_frame;
+    return allocated_frames;
 }
 
 void frame_allocator_free(frame_t frame, uint64_t size)

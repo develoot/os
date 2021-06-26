@@ -58,7 +58,7 @@ static EFI_STATUS print_graphic_modes(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const 
 {
     EFI_STATUS status;
 
-    EFI_GRAPHICS_OUTPUT_MODE_dataRMATION *info = NULL;
+    EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info = NULL;
     uint64_t info_size = 0;
 
     for (uint64_t i = 0; i < graphics_output->Mode->MaxMode; ++i) {
@@ -68,11 +68,11 @@ static EFI_STATUS print_graphic_modes(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const 
             return status;
         }
 
-        Print(L"Mode: %03d, Width: %d, Height: %d, Format: %x %s\n",
+        Print(L"Mode: %2d, Width: %4d, Height: %4d %s\n",
                 i,
                 info->HorizontalResolution,
-                info->VerticalResolution, info->PixelFormat,
-                i == graphics_output->Mode->Mode ? "(current)" : "");
+                info->VerticalResolution,
+                i == graphics_output->Mode->Mode ? "(current)" : " ");
     }
 
     return EFI_SUCCESS;

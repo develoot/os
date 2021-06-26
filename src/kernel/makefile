@@ -1,7 +1,7 @@
 SYSLIB = /usr/lib
 EFIINC = /usr/include/efi
 CFLAGS = -I$(MODULES) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
-		 -Wall -Wextra -fpie -ffreestanding -fshort-wchar -g -DDEBUG_ASSERT -O2
+		 -O2 -Wall -Wextra -fpie -ffreestanding -fshort-wchar -g -DDEBUG_ASSERT
 LDFLAGS = -Bstatic -Bsymbolic -pie -nostdlib --gc-sections --no-undefined-version
 ASMFLAGS =
 
@@ -23,8 +23,7 @@ $(ASMOBJS): $(ASMSRCS)
 	$(AS) $(ASMFLAGS) -o $@ -f elf64 $(@:.o=.S)
 
 %.d: %.c
-	rm -f $@; \
-	$(CC) $(CFLAGS) -MM -MT "$@ $(@:.d=.o)" $< -o $@ \
+	$(CC) $(CFLAGS) -MM -MT "$@ $(@:.d=.o)" $< -o $@
 
 PHONY += clean
 clean:

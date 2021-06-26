@@ -149,7 +149,7 @@ static inline void process_command(void)
 
 static inline bool is_valid_input(char input)
 {
-    if (input == ' ' || input == '\n' || input == '\t'
+    if (       input == ' '             || input == '\n'            || input == '\t'
             || input == '`'             || input == '~'             || input == '!'
             || input == '@'             || input == '#'             || input == '$'
             || input == '%'             || input == '^'             || input == '&'
