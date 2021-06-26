@@ -6,6 +6,7 @@
 
 #define UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE (512)
 #define MAX_PROGRAM_HEADER_TABLE_SIZE      (512)
+#define GRAPHIC_MODE_NUMBER                (10)
 
 static EFI_MEMORY_DESCRIPTOR descriptor_buffer[UEFI_MEMORY_DESCRIPTOR_BUFFER_SIZE];
 static Elf64_Phdr program_header_table[MAX_PROGRAM_HEADER_TABLE_SIZE];
@@ -79,7 +80,7 @@ static EFI_STATUS print_graphic_modes(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const 
 }
 #endif
 
-EFI_STATUS open_file(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
+static EFI_STATUS open_file(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
         EFI_FILE **const out, EFI_FILE *const root, const CHAR16 *const path)
 {
     EFI_STATUS status;
@@ -101,7 +102,13 @@ EFI_STATUS open_file(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_sy
     return EFI_SUCCESS;
 }
 
-EFI_STATUS get_graphic_frame_buffer_data(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output,
+static EFI_STATUS set_graphic_mode(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output)
+{
+    EFI_STATUS status = uefi_call_wrapper(graphics_output->SetMode, 2, graphics_output, GRAPHIC_MODE_NUMBER);
+    return status;
+}
+
+static EFI_STATUS get_graphic_frame_buffer_data(const EFI_GRAPHICS_OUTPUT_PROTOCOL *const graphics_output,
         struct boot_data *const boot_data)
 {
     /* Unsupported pixel format. */
@@ -126,7 +133,7 @@ EFI_STATUS get_graphic_frame_buffer_data(const EFI_GRAPHICS_OUTPUT_PROTOCOL *con
     return EFI_SUCCESS;
 }
 
-EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
+static EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_file_system,
         struct boot_data *const boot_data, EFI_FILE_PROTOCOL *const root,
         const CHAR16 *const path)
 {
@@ -171,7 +178,7 @@ EFI_STATUS load_font_psf1(const EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *const simple_fi
     return EFI_SUCCESS;
 }
 
-EFI_STATUS load_kernel_elf(struct boot_data *const boot_data,
+static EFI_STATUS load_kernel_elf(struct boot_data *const boot_data,
         const EFI_FILE_PROTOCOL *const kernel_file)
 {
     EFI_STATUS status;
@@ -309,7 +316,7 @@ EFI_STATUS load_kernel_elf(struct boot_data *const boot_data,
     return 0;
 }
 
-EFI_STATUS get_memory_map_data(struct boot_data *const boot_data,
+static EFI_STATUS get_memory_map_data(struct boot_data *const boot_data,
         EFI_MEMORY_DESCRIPTOR *const descriptor_buffer)
 {
     EFI_STATUS status;
@@ -354,8 +361,14 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
         goto ERROR;
     }
 
-    Print(L"Open kernel file.\n");
+    Print(L"Set graphic mode.\n");
+    status = set_graphic_mode(graphics_output);
+    if (EFI_ERROR(status)) {
+        Print(L"Failed to set graphic mode. %r\n", status);
+        goto ERROR;
+    }
 
+    Print(L"Open kernel file.\n");
     EFI_FILE *kernel_file = NULL;
     status = open_file(simple_file_system, &kernel_file, NULL, L"kernel.elf");
     if (EFI_ERROR(status)) {
@@ -364,7 +377,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     }
 
     Print(L"Load kernel ELF file.\n");
-
     status = load_kernel_elf(&boot_data, kernel_file);
     if (EFI_ERROR(status)) {
         Print(L"Failed to load kernel ELF file. %r\n", status);
@@ -376,7 +388,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
             boot_data.kernel_start_address, boot_data.kernel_end_address);
 
     Print(L"Get graphic frame buffer info.\n");
-
     status = get_graphic_frame_buffer_data(graphics_output, &boot_data);
     if (EFI_ERROR(status)) {
         Print(L"Failed to get graphic frame buffer information. %r\n", status);
@@ -391,7 +402,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
             boot_data.frame_buffer_data.height);
 
     Print(L"Load PSF1 font.\n");
-
     status = load_font_psf1(simple_file_system, &boot_data, NULL, L"zap-light16.psf");
     if (EFI_ERROR(status)) {
         Print(L"Failed to load PSF1 font. %r\n", status);
@@ -402,7 +412,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     Print(L"GlyphSize: %d\n", boot_data.psf1_data.header.glyph_size);
 
     Print(L"Get memory map of UEFI system.\n");
-
     status = get_memory_map_data(&boot_data, descriptor_buffer);
     if (EFI_ERROR(status)) {
         Print(L"Failed to get memory map of UEFI system. %r\n", status);
@@ -410,7 +419,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
     }
 
     Print(L"Exit boot services.\n");
-
     uefi_call_wrapper(BS->ExitBootServices, 2,
             image_handle, boot_data.memory_map_data.memory_map_key);
 
@@ -421,7 +429,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
 #endif
 
     Print(L"Start kernel.\n");
-
     int (*start_kernel)(struct boot_data) =
         (__attribute__((sysv_abi)) int (*)(const struct boot_data))
             boot_data.kernel_start_address;

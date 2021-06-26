@@ -4,8 +4,7 @@ EFILDS = $(SYSLIB)/elf_$(ARCH)_efi.lds
 EFICRT = $(SYSLIB)/crt0-efi-$(ARCH).o
 CFLAGS = -I$(MODULES) -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol \
 		-O2 -fpie -ffreestanding -fno-stack-protector -fno-stack-check -fshort-wchar \
-		-mno-red-zone -maccumulate-outgoing-args -DEFI_FUNCTION_WRAPPER -Wall -Wextra -g \
-		-DDEBUG_BOOT_GRAPHIC
+		-mno-red-zone -maccumulate-outgoing-args -DEFI_FUNCTION_WRAPPER -Wall -Wextra -g
 LDFLAGS = -T$(EFILDS) -nostdlib -znocombreloc -shared -Bsymbolic -L$(SYSLIB) $(EFICRT)
 
 SRCS = $(wildcard *.c)
