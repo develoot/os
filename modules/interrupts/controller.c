@@ -108,31 +108,17 @@
 static inline void initialize_master_programmable_interrupt_controller(void)
 {
     port_write(pic_master0, ICW1);
-    port_wait();
-
     port_write(pic_master1, ICW2_MASTER);
-    port_wait();
-
     port_write(pic_master1, ICW3_MASTER);
-    port_wait();
-
     port_write(pic_master1, ICW4);
-    port_wait();
 }
 
 static inline void initialize_slave_programmable_interrupt_controller(void)
 {
     port_write(pic_slave0, ICW1);
-    port_wait();
-
     port_write(pic_slave1, ICW2_SLAVE);
-    port_wait();
-
     port_write(pic_slave1, ICW3_SLAVE);
-    port_wait();
-
     port_write(pic_slave1, ICW4);
-    port_wait();
 }
 
 void interrupt_controller_initialize(void)
@@ -145,9 +131,7 @@ void interrupt_controller_initialize(void)
 void interrupt_controller_set_mask(uint16_t mask)
 {
     port_write(pic_master1, (uint8_t)mask);
-    port_wait();
     port_write(pic_slave1, (uint8_t)(mask >> 8));
-    port_wait();
 }
 
 void interrupt_controller_notify_end(uint8_t interrupt_request_number)
