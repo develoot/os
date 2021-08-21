@@ -21,14 +21,15 @@ without any error, though.)
  - Support exceptions of IA-32e architecture.
  - Support interrupts of Intel 8259A interrupt controller.
  - Implemented a keyboard device driver.
- - Implemented basic console graphic library and shell.
+ - Implemented a basic graphic library.
+ - Implemented a basic shell.
 
 # To-do
 
- - Implement RTC driver.
+ - Implement a RTC driver.
  - Support APIC.
- - Implement CFS scheduler.
+ - Implement a CFS scheduler.
  - Support at least one file system.
- - Implement sophisticated console graphic library and shell.
- - Make the COS programmable.
+ - Implement a sophisticated graphic library.
+ - Implement a sophisticated shell.
 
