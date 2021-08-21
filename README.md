@@ -1,23 +1,33 @@
 # COS
 
-`COS` is a hobby operating system under development for better understanding of computer
-architecture and operating systems. (and for fun!)
+`COS` is a hobbyist operating system under development for better understanding of computer
+architectures and operating systems. (and for fun!)
 
-## How to build and run
+# How to build and run
 
-If you're using debian-based distro, you can just use `install-deps` script to install dependencies.
+In debian-based distributions, you can use `install-deps` script to install dependencies.
 
-If you meet all the dependencies, type `make run` to run the operating system using QEMU.
+Otherwise, please install all the dependencies listed in the `install-deps` script by yourself.
 
-This project is not completed, so I don't recommend you to run this on real hardware.
-(It will work without error, though.)
+If you meet all the dependencies, you can type `make run` to run the COS using QEMU.
 
-## Notes
+This project is not completed, so I recommend you not to run this on real hardware. (It will work
+without any error, though.)
 
-### Why no multiboot support?
+# Implemented features
 
-I want to design and write everything including bootloader from scratch.
+ - A bootloader for IA-32e UEFI environment.
+ - Support memory segmentation and level-4 paging.
+ - Support exceptions of IA-32e architecture.
+ - Support interrupts of Intel 8259A interrupt controller.
+ - Implemented a keyboard device driver.
+ - Implemented basic console graphic library and shell.
 
-### POSIX support?
+# To-do
 
-This project is for studying and fun. I don't think it's necessary.
+ - Implement RTC driver.
+ - Implement CFS scheduler.
+ - Support at least one file system.
+ - Implement sophisticated console graphic library and shell.
+ - Make the COS programmable.
+
