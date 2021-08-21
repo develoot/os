@@ -11,7 +11,7 @@ Otherwise, please install all the dependencies listed in the `install-deps` scri
 
 If you meet all the dependencies, you can type `make run` to run the COS using QEMU.
 
-This project is not completed, so I recommend you not to run this on real hardware. (It will work
+This project is not completed, so I recommend you not to run this on real hardwares. (It will work
 without any error, though.)
 
 # Implemented features
@@ -26,6 +26,7 @@ without any error, though.)
 # To-do
 
  - Implement RTC driver.
+ - Support APIC.
  - Implement CFS scheduler.
  - Support at least one file system.
  - Implement sophisticated console graphic library and shell.
